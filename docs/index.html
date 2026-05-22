@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Dynamic Group Dropdowns</title>
+    <title>University Timetable Scheduler - Two-Tier Group Isolation Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -13,11 +13,11 @@
     <header class="bg-slate-900 text-white shadow-md py-6 px-8 mb-8">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight">Structured Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Smart scheduling with auto-detected group dropdowns from your dataset.</p>
+                <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
+                <p class="text-slate-400 mt-1">Isolate by main structural groups and specific language/domain subgroups side-by-side.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Workflow:</strong> 1. Upload your ZIP/Excel file first $\rightarrow$ 2. Select detected categories from the dropdown rules $\rightarrow$ 3. Generate your conflict-free timetable.
+                <strong>Hierarchical Matrix Logic:</strong> Allows grouping the entire main category (e.g., <code class="text-amber-400">AEC -> ALL</code>) or singling out customized sub-branches (e.g., <code class="text-emerald-400">AEC -> ENG</code>) for custom day blocks.
             </div>
         </div>
     </header>
@@ -30,7 +30,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Upload your file first. The system will scan your code patterns and instantly build your configuration dropdown choices.
+                    Import your dataset. The application will immediately break down code strings into structural components and map child extensions.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -38,7 +38,7 @@
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
                         <p class="text-base font-medium text-gray-700">Drop ZIP or single Excel datasets here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Merges matching data sheets across matching rows automatically</p>
+                        <p class="text-xs text-gray-400">Decompresses folders and aligns column datasets client-side</p>
                     </div>
                 </div>
                 
@@ -83,14 +83,14 @@
         <div id="rulesPanel" class="opacity-40 pointer-events-none bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8 transition-all duration-300">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <span>⚙️</span> Step 2: Configure Allocation Rules (Auto-Detected Options Available)
+                    <span>⚙️</span> Step 2: Configure Two-Tier Allocation Rules
                 </h2>
                 <button id="addRuleBtn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold text-xs py-1.5 px-3 rounded-lg border border-indigo-200 transition-all">
-                    + Add New Allocation Rule
+                    + Add New Hierarchical Rule
                 </button>
             </div>
             <p class="text-sm text-gray-500 mb-4">
-                Select your groupings below from the drop-downs. The drop-down options are populated automatically from your file data patterns.
+                Pick a main group block, then refine your choice using the dynamic subgroup list. If you choose **Consolidated Day**, all matching elements pool together into one slot. If you choose **Parallel Pool**, options alternate concurrently.
             </p>
             
             <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -114,11 +114,13 @@
     </main>
 
     <script>
-        // Memory Stores
+        // Structural Data Registers
         let masterDataset = [];
         let uniquePrns = new Set();
         let uniquePapers = new Map(); // PaperCode -> PaperName
-        let detectedPrefixes = [];    // Extracted automatically from file data
+        
+        // Two-Tier Categorization Map Register: MainGroup -> Set of Subgroups (e.g. "AEC" -> {"ENG", "HIN", "MAL"})
+        let hierarchicalMap = new Map();
         let finalSlots = [];
 
         // DOM Handles
@@ -158,7 +160,7 @@
             masterDataset = [];
             uniquePrns.clear();
             uniquePapers.clear();
-            detectedPrefixes = [];
+            hierarchicalMap.clear();
             generateBtn.disabled = true;
             rulesContainer.innerHTML = "";
             rulesPanel.classList.add('opacity-40', 'pointer-events-none');
@@ -178,7 +180,7 @@
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     await extractSpreadsheetRows(file);
                 } else {
-                    alert("Format error. Please upload an .xlsx workbook or a compressed .zip folder.");
+                    alert("Format error. Please feed the generator an .xlsx workbook or a compressed .zip folder.");
                     showLoading(false);
                     return;
                 }
@@ -209,10 +211,13 @@
         }
 
         function alignAndConsolidateData() {
-            showLoading(true, "Deduplicating entries and analyzing course code structures...");
+            showLoading(true, "Deduplicating entries and analyzing structural subgroups...");
             const filteringMap = new Set();
             const consolidated = [];
-            const prefixesSet = new Set();
+
+            // Standard baseline structures to look for
+            const baseStructuralKeys = ["AEC", "MDC", "SEC", "VAC", "DSC"];
+            baseStructuralKeys.forEach(k => hierarchicalMap.set(k, new Set()));
 
             for (let i = 0; i < masterDataset.length; i++) {
                 const r = masterDataset[i];
@@ -229,14 +234,27 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Dynamically scan for structural course groupings from the PaperCode text
-                    // Handles patterns like KU2AECENG106 -> extracts AECENG, AEC, MDC, DSC prefixes automatically
-                    extractSmartPrefixes(code, prefixesSet);
+                    // Execute Two-Tier Structural Parse Map
+                    // e.g. KU2AECENG106 -> Matches "AEC" as Main Group and extracts "ENG" as Subgroup
+                    const alphaMatches = code.match(/[A-Z]+/g);
+                    if (alphaMatches) {
+                        alphaMatches.forEach(chunk => {
+                            if (chunk.length >= 3) {
+                                baseStructuralKeys.forEach(baseKey => {
+                                    if (chunk.startsWith(baseKey)) {
+                                        const subGroupPart = chunk.substring(baseKey.length);
+                                        if (subGroupPart.length > 0) {
+                                            hierarchicalMap.get(baseKey).add(subGroupPart); // Adds e.g. "ENG", "HIN"
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
             }
 
             masterDataset = consolidated;
-            detectedPrefixes = Array.from(prefixesSet).sort();
 
             statRawRows.innerText = masterDataset.length + " Rows Processed";
             statStudents.innerText = uniquePrns.size;
@@ -246,41 +264,23 @@
             
             if (masterDataset.length > 0) {
                 generateBtn.disabled = false;
-                // Activate configuration steps and construct baseline rules
                 rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
                 buildDefaultPresetRules();
             }
         }
 
-        // Helper: Extract valid, meaningful sub-group tags from text codes
-        function extractSmartPrefixes(code, prefixesSet) {
-            // Find where the alphabetical block sits after university codes (e.g., KU2[AECENG]105)
-            const match = code.match(/[A-Z]+/g);
-            if (match) {
-                match.forEach(alpha => {
-                    if (alpha.length >= 3) {
-                        prefixesSet.add(alpha); // e.g., "AECENG", "AEC", "MDC", "DSC"
-                        // If it's a long combined string like AECENG, add its sub-prefix "AEC" too
-                        if (alpha.startsWith("AEC") && alpha.length > 3) {
-                            prefixesSet.add("AEC");
-                        }
-                    }
-                });
-            }
-        }
-
-        // Generate drop-down card options dynamically
-        function createRuleCardElement(defaultType, defaultPattern = "") {
+        // Two-Tier Dynamic Dropdown Card Builder UI Layer
+        function createHierarchicalRuleCard(defaultType, defaultMain = "", defaultSub = "") {
             const card = document.createElement('div');
             const bgClass = defaultType === 'universal-group' ? 'border-amber-200 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/40';
             card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
             card.setAttribute('data-type', defaultType);
 
-            // Construct drop-down choices from scanned dataset entries
-            let selectOptionsHtml = `<option value="">-- Choose Category --</option>`;
-            detectedPrefixes.forEach(prefix => {
-                const selectedAttr = prefix === defaultPattern ? 'selected' : '';
-                selectOptionsHtml += `<option value="${prefix}" ${selectedAttr}>${prefix}</option>`;
+            // Populate Dropdown 1: Main Categories
+            let mainOptionsHtml = `<option value="">-- Select Main Group --</option>`;
+            Array.from(hierarchicalMap.keys()).forEach(mainKey => {
+                const selectedAttr = mainKey === defaultMain ? 'selected' : '';
+                mainOptionsHtml += `<option value="${mainKey}" ${selectedAttr}>${mainKey}</option>`;
             });
 
             const isUniversalSelected = defaultType === 'universal-group' ? 'selected' : '';
@@ -295,45 +295,83 @@
                         </select>
                         <button class="text-gray-400 hover:text-red-500 text-sm font-bold remove-rule-btn">✕</button>
                     </div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Select Group Category</label>
-                    <select class="rule-pattern-dropdown w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        ${selectOptionsHtml}
-                    </select>
+                    
+                    <div class="space-y-3 mt-1">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">1. Main Group</label>
+                            <select class="main-group-select w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none">
+                                ${mainOptionsHtml}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">2. Refine Subgroup</label>
+                            <select class="sub-group-select w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none" disabled>
+                                <option value="">-- Choose Subgroup --</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             `;
 
-            // Style updating on rule selector type mutations
+            const mainSelect = card.querySelector('.main-group-select');
+            const subSelect = card.querySelector('.sub-group-select');
             const typeSelector = card.querySelector('.rule-type-selector');
+
+            // Handler to populate Dropdown 2 when Dropdown 1 is selected
+            function updateSubgroupOptions(selectedMain, currentSubVal = "") {
+                if (!selectedMain || !hierarchicalMap.has(selectedMain)) {
+                    subSelect.innerHTML = `<option value="">-- Choose Subgroup --</option>`;
+                    subSelect.disabled = true;
+                    return;
+                }
+
+                subSelect.disabled = false;
+                let subOptionsHtml = `<option value="ALL">ALL Subgroups (Entire Core Block)</option>`;
+                
+                const subSet = hierarchicalMap.get(selectedMain);
+                Array.from(subSet).sort().forEach(subKey => {
+                    const selectedAttr = subKey === currentSubVal ? 'selected' : '';
+                    subOptionsHtml += `<option value="${subKey}" ${selectedAttr}>${subKey}</option>`;
+                });
+                subSelect.innerHTML = subOptionsHtml;
+            }
+
+            // Sync selectors on type switches
             typeSelector.addEventListener('change', (e) => {
                 card.setAttribute('data-type', e.target.value);
-                if(e.target.value === 'universal-group') {
-                    card.className = "p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card";
-                } else {
-                    card.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card";
-                }
+                card.className = e.target.value === 'universal-group' 
+                    ? "p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card"
+                    : "p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card";
             });
 
+            mainSelect.addEventListener('change', (e) => updateSubgroupOptions(e.target.value));
             card.querySelector('.remove-rule-btn').addEventListener('click', () => card.remove());
+
+            // Initialize presets if parameters are passed in
+            if (defaultMain) {
+                updateSubgroupOptions(defaultMain, defaultSub);
+            }
+
             rulesContainer.appendChild(card);
         }
 
-        // Build Default Presets from dynamically scanned options
+        // Initialize Standard University Configurations Out of Box
         function buildDefaultPresetRules() {
             rulesContainer.innerHTML = "";
             
-            // Auto-detect and pre-load baseline targets
-            if (detectedPrefixes.includes("AECENG")) {
-                createRuleCardElement('universal-group', 'AECENG');
+            // Preset 1: AEC -> ENG (Universal Consolidated Day)
+            if (hierarchicalMap.get("AEC")?.has("ENG")) {
+                createHierarchicalRuleCard('universal-group', 'AEC', 'ENG');
             }
-            if (detectedPrefixes.includes("AEC")) {
-                createRuleCardElement('pool', 'AEC');
-            }
-            if (detectedPrefixes.includes("MDC")) {
-                createRuleCardElement('pool', 'MDC');
-            }
+            // Preset 2: AEC -> ALL remaining options running in parallel
+            createHierarchicalRuleCard('pool', 'AEC', 'ALL');
+            // Preset 3: MDC -> ALL elective choices running in parallel
+            createHierarchicalRuleCard('pool', 'MDC', 'ALL');
+            // Preset 4: SEC -> ALL choices running in parallel
+            createHierarchicalRuleCard('pool', 'SEC', 'ALL');
         }
 
-        addRuleBtn.addEventListener('click', () => createRuleCardElement('pool', ''));
+        addRuleBtn.addEventListener('click', () => createHierarchicalRuleCard('pool', '', ''));
 
         function showLoading(show, txt = "") {
             if (show) {
@@ -346,18 +384,22 @@
             }
         }
 
-        // Scheduler Allocation Engine Engine
+        // Rule-Based Group-Allocation Scheduler Engine (REINFORCED TWO-TIER PASS)
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Executing dynamic rule allocation passes...");
+            showLoading(true, "Executing priority block allocation routines...");
             
             setTimeout(() => {
                 try {
-                    // Gather configurations from the dropdown fields
+                    // Extract execution definitions from the two-tier layout controls
                     const rules = [];
                     document.querySelectorAll('.rule-card').forEach(card => {
                         const type = card.querySelector('.rule-type-selector').value;
-                        const pattern = card.querySelector('.rule-pattern-dropdown').value;
-                        if (pattern) rules.push({ type, pattern });
+                        const mainGroup = card.querySelector('.main-group-select').value;
+                        const subGroup = card.querySelector('.sub-group-select').value;
+                        
+                        if (mainGroup && subGroup) {
+                            rules.push({ type, mainGroup, subGroup });
+                        }
                     });
 
                     const enrollmentMap = new Map();
@@ -367,20 +409,37 @@
                     let remainingPapers = Array.from(uniquePapers.keys());
                     const structuredSlots = []; 
 
-                    // BLOCK 1: UNIVERSAL CONSOLIDATED DAYS
+                    // Helper checker function to check if a paper code matches a specific rule definition
+                    function matchesTwoTierRule(paperCode, rule) {
+                        // Check if the paper contains the main key (e.g. AEC)
+                        if (!paperCode.includes(rule.mainGroup)) return false;
+                        
+                        // If rule is set to catch ALL variations within that main block
+                        if (rule.subGroup === "ALL") return true;
+                        
+                        // Explicit matching check (e.g. contains main group AEC and sub group ENG -> AECENG)
+                        const fullTargetString = rule.mainGroup + rule.subGroup;
+                        return paperCode.includes(fullTargetString);
+                    }
+
+                    // ==========================================
+                    // PASS 1: UNIVERSAL CONSOLIDATED GROUPS
+                    // ==========================================
                     const universalRules = rules.filter(r => r.type === 'universal-group');
                     universalRules.forEach(rule => {
-                        const matches = remainingPapers.filter(code => code.includes(rule.pattern));
+                        const matches = remainingPapers.filter(code => matchesTwoTierRule(code, rule));
                         if (matches.length > 0) {
-                            structuredSlots.push(matches);
+                            structuredSlots.push(matches); // Forces all matches into a single unified session day
                             remainingPapers = remainingPapers.filter(c => !matches.includes(c));
                         }
                     });
 
-                    // BLOCK 2: ELECTIVE PARALLEL POOLS
+                    // ==========================================
+                    // PASS 2: ELECTIVE PARALLEL POOLS
+                    // ==========================================
                     const poolRules = rules.filter(r => r.type === 'pool');
                     poolRules.forEach(rule => {
-                        const matches = remainingPapers.filter(code => code.includes(rule.pattern));
+                        const matches = remainingPapers.filter(code => matchesTwoTierRule(code, rule));
                         if (matches.length > 0) {
                             const conflictVerifiedPool = [];
                             
@@ -411,7 +470,9 @@
                         }
                     });
 
-                    // BLOCK 3: CORE DOMAIN MAJOR PAPERS (DSC)
+                    // ==========================================
+                    // PASS 3: CORE DOMAIN MAJOR PAPERS (DSC / FALLBACK)
+                    // ==========================================
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
 
                     remainingPapers.forEach(code => {
@@ -420,8 +481,10 @@
 
                         for (let i = 0; i < structuredSlots.length; i++) {
                             const targetSlot = structuredSlots[i];
+                            
+                            // Guard check: Avoid mixing core major subjects into slots dedicated to custom rules
                             const isRuleBasedSlot = targetSlot.some(c => 
-                                rules.some(r => c.includes(r.pattern))
+                                rules.some(rule => matchesTwoTierRule(c, rule))
                             );
                             
                             if (isRuleBasedSlot) continue;
@@ -451,7 +514,7 @@
                     });
 
                     finalSlots = structuredSlots;
-                    renderTimetableOutput(finalSlots, enrollmentMap, rules);
+                    renderTimetableOutput(finalSlots, enrollmentMap, rules, matchesTwoTierRule);
 
                 } catch (e) {
                     console.error(e);
@@ -462,7 +525,7 @@
             }, 50);
         });
 
-        function renderTimetableOutput(slots, enrollmentMap, rules) {
+        function renderTimetableOutput(slots, enrollmentMap, rules, matchesTwoTierRule) {
             timetableGrid.innerHTML = "";
             slotSummaryText.innerText = `Distributed ${uniquePapers.size} course profiles safely across ${slots.length} optimized timeline days.`;
 
@@ -472,8 +535,8 @@
                 
                 let tagHtml = `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${dayPapers.length} Papers Included</span>`;
                 
-                const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal-group' && c.includes(r.pattern)));
-                const isPool = dayPapers.some(c => rules.some(r => r.type === 'pool' && c.includes(r.pattern)));
+                const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal-group' && matchesTwoTierRule(c, r)));
+                const isPool = dayPapers.some(c => rules.some(r => r.type === 'pool' && matchesTwoTierRule(c, r)));
                 
                 if (isUniversal) {
                     tagHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ Universal Consolidated Block</span>`;
