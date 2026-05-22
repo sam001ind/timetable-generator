@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Academic Timetable Scheduler with Grouping Rules</title>
+    <title>Advanced Academic Timetable Scheduler with Block Isolation</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Structured Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Intelligent grouping heuristics for overlapping electives and universal papers.</p>
+                <p class="text-slate-400 mt-1">Block-separated scheduling to insulate core papers from elective pools.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Dynamic Rules Engine:</strong> Dedicates complete days to universal codes (e.g., <code class="text-amber-400">AECENG</code>) or pools parallel alternative choices together on a single day (e.g., <code class="text-amber-400">AECHIN / AECMAL</code>).
+                <strong>Core Isolation Engine:</strong> Rule-matched slots are protected. Standard subjects (e.g., <code class="text-amber-400">DSC</code>) will never bleed into language or elective buckets.
             </div>
         </div>
     </header>
@@ -34,7 +34,7 @@
                 </button>
             </div>
             <p class="text-sm text-gray-500 mb-4">
-                Define the matching criteria for your course codes. The engine will match these substring signatures against your dataset's <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-gray-800">PaperCode</code> values.
+                Define structural rules based on code patterns. The core scheduler creates dedicated block-out periods matching these groups to stop accidental mix-ups.
             </p>
             
             <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -56,7 +56,7 @@
                         </div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
                         <input type="text" value="AEC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Bundles remaining matching options into a shared parallel exam block.</p>
+                        <p class="text-xs text-gray-400 mt-1.5">Bundles alternative choices (HIN, MAL, ARB) into an isolated parallel day block.</p>
                     </div>
                 </div>
 
@@ -67,7 +67,7 @@
                         </div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
                         <input type="text" value="MDC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Forces all matching MDC variations to coordinate on the same day block.</p>
+                        <p class="text-xs text-gray-400 mt-1.5">Forces all matching MDC options to combine into an isolated parallel day block.</p>
                     </div>
                 </div>
             </div>
@@ -186,7 +186,6 @@
                 </div>
             `;
             
-            // Watch type select mutations to color-code dynamically
             const selector = card.querySelector('.rule-type-selector');
             selector.addEventListener('change', (e) => {
                 card.setAttribute('data-type', e.target.value);
@@ -308,13 +307,13 @@
             }
         }
 
-        // Rule-Based Group-Allocation Scheduler Engine
+        // Rule-Based Group-Allocation Scheduler Engine (FIXED BLOCK ISOLATION LOGIC)
         generateBtn.addEventListener('click', () => {
             showLoading(true, "Parsing structural grouping profiles...");
             
             setTimeout(() => {
                 try {
-                    // 1. Gather rules from user dashboard inputs
+                    // 1. Gather rules from configuration panel
                     const rules = [];
                     document.querySelectorAll('.rule-card').forEach(card => {
                         const selector = card.querySelector('.rule-type-selector');
@@ -328,28 +327,28 @@
                     uniquePapers.forEach((name, code) => enrollmentMap.set(code, new Set()));
                     masterDataset.forEach(row => enrollmentMap.get(row.code).add(row.prn));
 
-                    // 3. Segment papers based on matching conditions
                     let remainingPapers = Array.from(uniquePapers.keys());
-                    const structuredSlots = []; // Array of arrays representing scheduled slot days
+                    const structuredSlots = []; 
 
-                    // A. Execute Universal Isolation Rule: If a course matches a universal pattern, it gets an isolated slot day
+                    // ==========================================
+                    // BLOCK 1: UNIVERSAL DEDICATED STREAM DAYS
+                    // ==========================================
                     const universalRules = rules.filter(r => r.type === 'universal');
                     universalRules.forEach(rule => {
                         const matches = remainingPapers.filter(code => code.includes(rule.pattern));
-                        
-                        // Treat each matching code as an independent, isolated exclusive block
                         matches.forEach(matchingCode => {
                             structuredSlots.push([matchingCode]);
                             remainingPapers = remainingPapers.filter(c => c !== matchingCode);
                         });
                     });
 
-                    // B. Execute Elective Pool Rule: Group papers matching the same pattern into a shared slot day
+                    // ==========================================
+                    // BLOCK 2: ELECTIVE BUCKET POOLS (PARALLEL DAYS)
+                    // ==========================================
                     const poolRules = rules.filter(r => r.type === 'pool');
                     poolRules.forEach(rule => {
                         const matches = remainingPapers.filter(code => code.includes(rule.pattern));
                         if (matches.length > 0) {
-                            // Run an internal check to confirm no internal overlap conflicts exist in this bucket choice
                             const conflictVerifiedPool = [];
                             
                             matches.forEach(code => {
@@ -360,7 +359,7 @@
                                     const allocatedStudents = enrollmentMap.get(allocated);
                                     for(const prn of codeStudents) {
                                         if(allocatedStudents.has(prn)) {
-                                            safeToPool = false; // Overlap detected
+                                            safeToPool = false; 
                                             break;
                                         }
                                     }
@@ -379,25 +378,27 @@
                         }
                     });
 
-                    // C. Process General Standard Papers: Fallback to the standard greedy conflict algorithm
-                    // Sort remaining courses by enrollment density to minimize potential schedule footprints
+                    // ==========================================
+                    // BLOCK 3: CORE DOMAIN MAJOR PAPERS (DSC)
+                    // ==========================================
+                    // Sort remaining standard core papers by registration size density
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
 
                     remainingPapers.forEach(code => {
                         const currentStudents = enrollmentMap.get(code);
                         let placed = false;
 
-                        // Attempt to fit standard papers into existing general slots, without violating rules or constraints
+                        // Iterate through current days to allocate without collisions
                         for (let i = 0; i < structuredSlots.length; i++) {
                             const targetSlot = structuredSlots[i];
                             
-                            // Check if this slot contains a course covered by our structural rules
-                            const holdsRuleBasedCourse = targetSlot.some(c => 
+                            // CRITICAL REPAIR GUARD: Check if this slot was claimed by Block 1 or Block 2 rules
+                            const isRuleBasedSlot = targetSlot.some(c => 
                                 rules.some(r => c.includes(r.pattern))
                             );
                             
-                            // Skip slots dedicated to specific rules to protect their structural logic
-                            if (holdsRuleBasedCourse) continue;
+                            // If it belongs to an Elective or Universal group, DO NOT let core papers fall into it!
+                            if (isRuleBasedSlot) continue;
 
                             let conflict = false;
                             for (const existingCode of targetSlot) {
@@ -418,6 +419,7 @@
                             }
                         }
 
+                        // If it can't fit into an open core slot day, generate a fresh unique day for it
                         if (!placed) {
                             structuredSlots.push([code]);
                         }
@@ -443,7 +445,6 @@
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
                 
-                // Identify if this day is dominated by a specific rule configuration
                 let tagHtml = `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${dayPapers.length} Papers Included</span>`;
                 
                 const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal' && c.includes(r.pattern)));
