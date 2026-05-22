@@ -3,83 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conflict-Free University Timetable Generator</title>
+    <title>Advanced Academic Timetable Scheduler with Grouping Rules</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans text-gray-900 min-h-screen">
 
-    <header class="bg-indigo-700 text-white shadow-md py-6 px-8 mb-8">
+    <header class="bg-slate-900 text-white shadow-md py-6 px-8 mb-8">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight">Exam Timetable Scheduler</h1>
-                <p class="text-indigo-200 mt-1">Smart, overlap-free schedules generated completely in-browser.</p>
+                <h1 class="text-3xl font-bold tracking-tight">Structured Exam Scheduler</h1>
+                <p class="text-slate-400 mt-1">Intelligent grouping heuristics for overlapping electives and universal papers.</p>
             </div>
-            <div class="bg-indigo-600 px-4 py-2 rounded-lg border border-indigo-500 text-xs text-indigo-100 max-w-sm">
-                <strong>Core Constraint:</strong> Ensures no single student (<span class="font-mono bg-indigo-800 px-1 rounded text-white">PRN</span>) has overlapping exams (<span class="font-mono bg-indigo-800 px-1 rounded text-white">PaperCode</span>) in the same slot.
+            <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
+                <strong>Dynamic Rules Engine:</strong> Dedicates complete days to universal codes (e.g., <code class="text-amber-400">AECENG</code>) or pools parallel alternative choices together on a single day (e.g., <code class="text-amber-400">AECHIN / AECMAL</code>).
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            
-            <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-2">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                    <span>📁</span> Upload Examination Dataset
+        <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <span>⚙️</span> Step 1: Configure Course Allocation & Grouping Rules
                 </h2>
-                <p class="text-sm text-gray-500 mb-4">
-                    Drop your <code class="bg-gray-100 px-1 py-0.5 rounded text-red-600">.zip</code> archive or standalone <code class="bg-gray-100 px-1 py-0.5 rounded text-green-600">.xlsx/.xls</code> file. If multiple spreadsheets exist inside the archive, they will automatically be integrated into a unified stream matching your master columns.
-                </p>
+                <button id="addRuleBtn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold text-xs py-1.5 px-3 rounded-lg border border-indigo-200 transition-all">
+                    + Add New Custom Rule
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">
+                Define the matching criteria for your course codes. The engine will match these substring signatures against your dataset's <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-gray-800">PaperCode</code> values.
+            </p>
+            
+            <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card" data-type="universal">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded">Universal Dedicated Day</span>
+                        </div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Substring Pattern Match</label>
+                        <input type="text" value="AECENG" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <p class="text-xs text-gray-400 mt-1.5">Isolates matching items on their own explicit calendar date slot.</p>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card" data-type="pool">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded">Elective Parallel Pool</span>
+                        </div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
+                        <input type="text" value="AEC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <p class="text-xs text-gray-400 mt-1.5">Bundles remaining matching options into a shared parallel exam block.</p>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card" data-type="pool">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded">Elective Parallel Pool</span>
+                        </div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
+                        <input type="text" value="MDC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <p class="text-xs text-gray-400 mt-1.5">Forces all matching MDC variations to coordinate on the same day block.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-2">
+                <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>📁</span> Step 2: Drop & Import ZIP or Excel Files
+                </h2>
                 
-                <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-indigo-500 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-indigo-50/30 transition-all group">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
                     <input type="file" id="fileInput" class="hidden" accept=".zip,.xlsx,.xls">
                     <div class="space-y-2">
-                        <span class="text-4xl block group-hover:scale-110 transition-transform">📥</span>
-                        <p class="text-base font-medium text-gray-700">Drag & drop files here, or <span class="text-indigo-600 underline">browse your device</span></p>
-                        <p class="text-xs text-gray-400">Supports ZIP archives containing Excel sheets or single workbooks</p>
+                        <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
+                        <p class="text-base font-medium text-gray-700">Drop ZIP or single Excel datasets here or <span class="text-indigo-600 underline">browse files</span></p>
+                        <p class="text-xs text-gray-400">Processes automated horizontal merging across matching system headers</p>
                     </div>
                 </div>
                 
-                <div id="loadingState" class="hidden mt-4 items-center justify-center gap-3 text-indigo-600 font-medium bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                <div id="loadingState" class="hidden mt-4 items-center justify-center gap-3 text-slate-800 font-medium bg-slate-100 p-3 rounded-lg border border-slate-200">
+                    <svg class="animate-spin h-5 w-5 text-indigo-600" viewBox="0 0 24 24" fill="none">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span id="loadingText">Extracting and aligning matrix data structures...</span>
+                    <span id="loadingText">Processing spreadsheet schema structures...</span>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                        <span>📊</span> Dataset Matrix
+                    <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                        <span>📊</span> Structural Overview
                     </h2>
-                    <div class="space-y-3">
+                    <div class="space-y-3 text-sm">
                         <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="text-sm text-gray-500">Total Raw Rows:</span>
-                            <span id="statRawRows" class="font-semibold font-mono text-gray-800">-</span>
+                            <span class="text-gray-500">Total Valid Records:</span>
+                            <span id="statRawRows" class="font-bold font-mono text-gray-800">-</span>
                         </div>
                         <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="text-sm text-gray-500">Unique Students (PRN):</span>
-                            <span id="statStudents" class="font-semibold font-mono text-gray-800">-</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span class="text-sm text-gray-500">Unique Papers:</span>
-                            <span id="statPapers" class="font-semibold font-mono text-gray-800">-</span>
+                            <span class="text-gray-500">Unique Active Students:</span>
+                            <span id="statStudents" class="font-bold font-mono text-gray-800">-</span>
                         </div>
                         <div class="flex justify-between items-center py-2">
-                            <span class="text-sm text-gray-500">Deduplicated Links:</span>
-                            <span id="statCleanLinks" class="font-semibold font-mono text-emerald-600">-</span>
+                            <span class="text-gray-500">Identified Distinct Papers:</span>
+                            <span id="statPapers" class="font-bold font-mono text-gray-800">-</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-6">
-                    <button id="generateBtn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed font-medium py-3 px-4 rounded-xl shadow-sm transition-all text-center block">
-                        ⚡ Generate Optimized Schedule
+                    <button id="generateBtn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed font-bold py-3 px-4 rounded-xl shadow-sm transition-all text-center">
+                        ⚡ Build Rule-Compliant Timetable
                     </button>
                 </div>
             </div>
@@ -88,11 +129,11 @@
         <div id="outputSection" class="hidden space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-xs border border-gray-200">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">Generated Examination Timeline Matrix</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Rule-Aligned Allocation Matrices</h2>
                     <p id="slotSummaryText" class="text-sm text-gray-500 mt-0.5">Calculated optimized distribution bins.</p>
                 </div>
-                <button id="exportBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
-                    <span>📥</span> Export Matrix to Excel
+                <button id="exportBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
+                    <span>📊</span> Download Timetable Document
                 </button>
             </div>
 
@@ -102,13 +143,13 @@
     </main>
 
     <script>
-        // Data Store Registers
+        // Memory Stores
         let masterDataset = [];
         let uniquePrns = new Set();
         let uniquePapers = new Map(); // PaperCode -> PaperName
         let finalSlots = [];
 
-        // UI DOM Elements
+        // DOM Handles
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const loadingState = document.getElementById('loadingState');
@@ -117,52 +158,148 @@
         const outputSection = document.getElementById('outputSection');
         const timetableGrid = document.getElementById('timetableGrid');
         const exportBtn = document.getElementById('exportBtn');
+        const addRuleBtn = document.getElementById('addRuleBtn');
+        const rulesContainer = document.getElementById('rulesContainer');
 
-        // Statistics Elements
+        // Metrics Handles
         const statRawRows = document.getElementById('statRawRows');
         const statStudents = document.getElementById('statStudents');
         const statPapers = document.getElementById('statPapers');
-        const statCleanLinks = document.getElementById('statCleanLinks');
         const slotSummaryText = document.getElementById('slotSummaryText');
 
-        // Setup File Upload Interactions
+        // Dynamic Rule Builder Handler
+        addRuleBtn.addEventListener('click', () => {
+            const card = document.createElement('div');
+            card.className = "p-4 rounded-xl border border-indigo-200 bg-indigo-50/20 relative flex flex-col justify-between rule-card";
+            card.setAttribute('data-type', 'pool');
+            card.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start mb-2">
+                        <select class="rule-type-selector bg-white text-xs font-bold border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none">
+                            <option value="pool">Elective Parallel Pool</option>
+                            <option value="universal">Universal Dedicated Day</option>
+                        </select>
+                        <button class="text-gray-400 hover:text-red-500 text-sm font-bold remove-rule-btn">✕</button>
+                    </div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pattern Match Token</label>
+                    <input type="text" placeholder="e.g. VAC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+            `;
+            
+            // Watch type select mutations to color-code dynamically
+            const selector = card.querySelector('.rule-type-selector');
+            selector.addEventListener('change', (e) => {
+                card.setAttribute('data-type', e.target.value);
+                if(e.target.value === 'universal') {
+                    card.className = "p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card";
+                } else {
+                    card.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card";
+                }
+            });
+
+            card.querySelector('.remove-rule-btn').addEventListener('click', () => card.remove());
+            rulesContainer.appendChild(card);
+        });
+
+        // Initialize drag & drop events
         dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50'); });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-800', 'bg-slate-50'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+            dropZone.classList.remove('border-slate-800', 'bg-slate-50');
             if (e.dataTransfer.files.length) handleIncomingFile(e.dataTransfer.files[0]);
         });
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length) handleIncomingFile(e.target.files[0]);
         });
 
-        // Main Route Router for File Processing
         async function handleIncomingFile(file) {
-            showLoading(true, "Detecting format and initialising processing arrays...");
-            resetDataState();
+            showLoading(true, "Scanning binary data packages...");
+            masterDataset = [];
+            uniquePrns.clear();
+            uniquePapers.clear();
+            generateBtn.disabled = true;
+            outputSection.classList.add('hidden');
             
             try {
                 const extension = file.name.split('.').pop().toLowerCase();
                 if (extension === 'zip') {
-                    await processZipArchive(file);
+                    const jszip = new JSZip();
+                    const unzipped = await jszip.loadAsync(file);
+                    for (const filename of Object.keys(unzipped.files)) {
+                        if (!unzipped.files[filename].dir && (filename.endsWith('.xlsx') || filename.endsWith('.xls'))) {
+                            const blob = await unzipped.files[filename].async("blob");
+                            await extractSpreadsheetRows(blob);
+                        }
+                    }
                 } else if (extension === 'xlsx' || extension === 'xls') {
-                    await processExcelWorkbook(file);
+                    await extractSpreadsheetRows(file);
                 } else {
-                    alert("Unsupported format. Please supply an standard Excel spreadsheet or ZIP wrapper.");
+                    alert("Format error. Please feed the generator an .xlsx workbook or a compressed .zip folder.");
                     showLoading(false);
+                    return;
                 }
+                alignAndConsolidateData();
             } catch (err) {
                 console.error(err);
-                alert("Runtime error encountered parsing structured binary spreadsheet formats: " + err.message);
+                alert("Processing Exception: " + err.message);
                 showLoading(false);
             }
         }
 
-        function showLoading(show, text = "") {
+        function extractSpreadsheetRows(fileBlob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        workbook.SheetNames.forEach(name => {
+                            const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: "" });
+                            masterDataset = masterDataset.concat(sheetRows);
+                        });
+                        resolve();
+                    } catch (ex) { reject(ex); }
+                };
+                reader.readAsArrayBuffer(fileBlob);
+            });
+        }
+
+        function alignAndConsolidateData() {
+            showLoading(true, "Deduplicating entries across PRN and PaperCode metrics...");
+            const filteringMap = new Set();
+            const consolidated = [];
+
+            for (let i = 0; i < masterDataset.length; i++) {
+                const r = masterDataset[i];
+                const prn = r["PRN"] ? String(r["PRN"]).trim() : "";
+                const code = r["PaperCode"] ? String(r["PaperCode"]).trim() : "";
+                const name = r["PaperName"] ? String(r["PaperName"]).trim() : `Course Code ${code}`;
+
+                if (!prn || !code) continue;
+
+                const trackingKey = `${prn}_${code}`;
+                if (!filteringMap.has(trackingKey)) {
+                    filteringMap.add(trackingKey);
+                    uniquePrns.add(prn);
+                    uniquePapers.set(code, name);
+                    consolidated.push({ prn, code, name, raw: r });
+                }
+            }
+
+            masterDataset = consolidated;
+            statRawRows.innerText = masterDataset.length + " Rows Processed";
+            statStudents.innerText = uniquePrns.size;
+            statPapers.innerText = uniquePapers.size;
+
+            showLoading(false);
+            if (masterDataset.length > 0) generateBtn.disabled = false;
+        }
+
+        function showLoading(show, txt = "") {
             if (show) {
-                loadingText.innerText = text;
+                loadingText.innerText = txt;
                 loadingState.classList.remove('hidden');
                 loadingState.classList.add('flex');
             } else {
@@ -171,259 +308,203 @@
             }
         }
 
-        function resetDataState() {
-            masterDataset = [];
-            uniquePrns.clear();
-            uniquePapers.clear();
-            generateBtn.disabled = true;
-            outputSection.classList.add('hidden');
-            timetableGrid.innerHTML = "";
-            
-            statRawRows.innerText = "-";
-            statStudents.innerText = "-";
-            statPapers.innerText = "-";
-            statCleanLinks.innerText = "-";
-        }
-
-        // Processing Logic: Extract items from within a ZIP file
-        async function processZipArchive(zipFile) {
-            showLoading(true, "Decompressing ZIP content package contents...");
-            const jszip = new JSZip();
-            const unzipped = await jszip.loadAsync(zipFile);
-            
-            let filesFound = 0;
-            for (const filename of Object.keys(unzipped.files)) {
-                if (!unzipped.files[filename].dir && (filename.endsWith('.xlsx') || filename.endsWith('.xls'))) {
-                    showLoading(true, `Unpacking and parsing nested matrix worksheet: ${filename}`);
-                    const fileBlob = await unzipped.files[filename].async("blob");
-                    await processExcelWorkbook(fileBlob);
-                    filesFound++;
-                }
-            }
-            if (filesFound === 0) {
-                throw new Error("Target payload void. No valid .xlsx or .xls files located inside the root or subfolders of the zip file.");
-            }
-            processAndSummarizeCleanData();
-        }
-
-        // Processing Logic: Parse sheet to memory structures
-        async function processExcelWorkbook(fileBlob) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        
-                        // Parse rows out of all tabs/worksheets in this file
-                        workbook.SheetNames.forEach(sheetName => {
-                            const sheet = workbook.Sheets[sheetName];
-                            const rawJson = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-                            masterDataset = masterDataset.concat(rawJson);
-                        });
-                        resolve();
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-                reader.onerror = () => reject(new Error("File tracking/reading read stream anomaly."));
-                reader.readAsArrayBuffer(fileBlob);
-            }).then(() => {
-                // If it was parsed directly (not through ZIP helper loop), invoke metrics buildout immediately
-                if (masterDataset.length > 0 && !loadingText.innerText.includes("nested matrix worksheet")) {
-                    processAndSummarizeCleanData();
-                }
-            });
-        }
-
-        // Deduplication & Alignment Mapping Layer
-        function processAndSummarizeCleanData() {
-            showLoading(true, "Aligning row headers and filtering duplicate entries...");
-            
-            const processedLinks = new Set();
-            const validDataMatrix = [];
-
-            for (let i = 0; i < masterDataset.length; i++) {
-                const row = masterDataset[i];
-                // Extract unique fields. Trim any empty string configurations safely
-                const prn = row["PRN"] ? String(row["PRN"]).trim() : "";
-                const paperCode = row["PaperCode"] ? String(row["PaperCode"]).trim() : "";
-                const paperName = row["PaperName"] ? String(row["PaperName"]).trim() : `Paper ${paperCode}`;
-
-                if (!prn || !paperCode) continue; // Bypass structural records missing identifiers
-
-                // Compound primary registration check to drop structural duplicates
-                const compoundKey = `${prn}_${paperCode}`;
-                if (!processedLinks.has(compoundKey)) {
-                    processedLinks.add(compoundKey);
-                    uniquePrns.add(prn);
-                    uniquePapers.set(paperCode, paperName);
-                    
-                    validDataMatrix.push({
-                        prn: prn,
-                        paperCode: paperCode,
-                        paperName: paperName,
-                        fullRowData: row
-                    });
-                }
-            }
-
-            // Update state engine
-            masterDataset = validDataMatrix;
-
-            // UI Metrics Output Assignment
-            statRawRows.innerText = masterDataset.length + " rows mapped";
-            statStudents.innerText = uniquePrns.size;
-            statPapers.innerText = uniquePapers.size;
-            statCleanLinks.innerText = processedLinks.size + " connections";
-
-            showLoading(false);
-            if (masterDataset.length > 0) {
-                generateBtn.disabled = false;
-            } else {
-                alert("The dataset headers parsed successfully, but zero complete valid data items holding 'PRN' and 'PaperCode' keys were registered.");
-            }
-        }
-
-        // Algorithmic Constraint Implementation (Greedy Graph-Coloring Engine)
+        // Rule-Based Group-Allocation Scheduler Engine
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Compiling enrollment maps and solving optimization graph...");
+            showLoading(true, "Parsing structural grouping profiles...");
             
             setTimeout(() => {
                 try {
-                    // 1. Build inverted indexing profiles: Map every exam paper to the students enrolled in it
-                    const paperToStudentsMap = new Map(); // PaperCode -> Set of PRNs
-                    uniquePapers.forEach((name, code) => {
-                        paperToStudentsMap.set(code, new Set());
+                    // 1. Gather rules from user dashboard inputs
+                    const rules = [];
+                    document.querySelectorAll('.rule-card').forEach(card => {
+                        const selector = card.querySelector('.rule-type-selector');
+                        const type = selector ? selector.value : card.getAttribute('data-type');
+                        const pattern = card.querySelector('.rule-pattern').value.trim();
+                        if (pattern) rules.push({ type, pattern });
                     });
 
-                    masterDataset.forEach(record => {
-                        paperToStudentsMap.get(record.paperCode).add(record.prn);
+                    // 2. Map inverse registries (PaperCode -> Student PRNs)
+                    const enrollmentMap = new Map();
+                    uniquePapers.forEach((name, code) => enrollmentMap.set(code, new Set()));
+                    masterDataset.forEach(row => enrollmentMap.get(row.code).add(row.prn));
+
+                    // 3. Segment papers based on matching conditions
+                    let remainingPapers = Array.from(uniquePapers.keys());
+                    const structuredSlots = []; // Array of arrays representing scheduled slot days
+
+                    // A. Execute Universal Isolation Rule: If a course matches a universal pattern, it gets an isolated slot day
+                    const universalRules = rules.filter(r => r.type === 'universal');
+                    universalRules.forEach(rule => {
+                        const matches = remainingPapers.filter(code => code.includes(rule.pattern));
+                        
+                        // Treat each matching code as an independent, isolated exclusive block
+                        matches.forEach(matchingCode => {
+                            structuredSlots.push([matchingCode]);
+                            remainingPapers = remainingPapers.filter(c => c !== matchingCode);
+                        });
                     });
 
-                    // 2. Sort papers in descending order based on enrollment numbers (heuristics layer)
-                    const sortedPapers = Array.from(uniquePapers.keys()).sort((a, b) => {
-                        return paperToStudentsMap.get(b).size - paperToStudentsMap.get(a).size;
+                    // B. Execute Elective Pool Rule: Group papers matching the same pattern into a shared slot day
+                    const poolRules = rules.filter(r => r.type === 'pool');
+                    poolRules.forEach(rule => {
+                        const matches = remainingPapers.filter(code => code.includes(rule.pattern));
+                        if (matches.length > 0) {
+                            // Run an internal check to confirm no internal overlap conflicts exist in this bucket choice
+                            const conflictVerifiedPool = [];
+                            
+                            matches.forEach(code => {
+                                const codeStudents = enrollmentMap.get(code);
+                                let safeToPool = true;
+
+                                for(const allocated of conflictVerifiedPool) {
+                                    const allocatedStudents = enrollmentMap.get(allocated);
+                                    for(const prn of codeStudents) {
+                                        if(allocatedStudents.has(prn)) {
+                                            safeToPool = false; // Overlap detected
+                                            break;
+                                        }
+                                    }
+                                    if(!safeToPool) break;
+                                }
+
+                                if(safeToPool) {
+                                    conflictVerifiedPool.push(code);
+                                    remainingPapers = remainingPapers.filter(c => c !== code);
+                                }
+                            });
+
+                            if(conflictVerifiedPool.length > 0) {
+                                structuredSlots.push(conflictVerifiedPool);
+                            }
+                        }
                     });
 
-                    // 3. Greedy Graph Coloring Iteration Pass
-                    const allocatedSlots = []; // Array of arrays containing assigned PaperCodes
+                    // C. Process General Standard Papers: Fallback to the standard greedy conflict algorithm
+                    // Sort remaining courses by enrollment density to minimize potential schedule footprints
+                    remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
 
-                    sortedPapers.forEach(currentPaperCode => {
-                        const currentPaperStudents = paperToStudentsMap.get(currentPaperCode);
-                        let assignedToExistingSlot = false;
+                    remainingPapers.forEach(code => {
+                        const currentStudents = enrollmentMap.get(code);
+                        let placed = false;
 
-                        // Check each existing slot to see if this paper can fit without causing an overlap
-                        for (let i = 0; i < allocatedSlots.length; i++) {
-                            const activeSlotPapers = allocatedSlots[i];
-                            let hasConflict = false;
+                        // Attempt to fit standard papers into existing general slots, without violating rules or constraints
+                        for (let i = 0; i < structuredSlots.length; i++) {
+                            const targetSlot = structuredSlots[i];
+                            
+                            // Check if this slot contains a course covered by our structural rules
+                            const holdsRuleBasedCourse = targetSlot.some(c => 
+                                rules.some(r => c.includes(r.pattern))
+                            );
+                            
+                            // Skip slots dedicated to specific rules to protect their structural logic
+                            if (holdsRuleBasedCourse) continue;
 
-                            // If any paper already in this slot shares a student with the current paper, it's a conflict
-                            for (const existingPaperCode of activeSlotPapers) {
-                                const existingPaperStudents = paperToStudentsMap.get(existingPaperCode);
-                                
-                                // Intersection logic: check if sets share an asset element
-                                for (const studentPrn of currentPaperStudents) {
-                                    if (existingPaperStudents.has(studentPrn)) {
-                                        hasConflict = true;
+                            let conflict = false;
+                            for (const existingCode of targetSlot) {
+                                const existingStudents = enrollmentMap.get(existingCode);
+                                for (const student of currentStudents) {
+                                    if (existingStudents.has(student)) {
+                                        conflict = true;
                                         break;
                                     }
                                 }
-                                if (hasConflict) break;
+                                if (conflict) break;
                             }
 
-                            // Safe assignment pathway if zero student collisions are registered
-                            if (!hasConflict) {
-                                activeSlotPapers.push(currentPaperCode);
-                                assignedToExistingSlot = true;
+                            if (!conflict) {
+                                targetSlot.push(code);
+                                placed = true;
                                 break;
                             }
                         }
 
-                        // If the current paper conflicts with all existing slots, create a new slot for it
-                        if (!assignedToExistingSlot) {
-                            allocatedSlots.push([currentPaperCode]);
+                        if (!placed) {
+                            structuredSlots.push([code]);
                         }
                     });
 
-                    finalSlots = allocatedSlots;
-                    renderTimetableOutput(finalSlots, paperToStudentsMap);
-                } catch (err) {
-                    console.error(err);
-                    alert("Algorithmic crash encountered: " + err.message);
+                    finalSlots = structuredSlots;
+                    renderTimetableOutput(finalSlots, enrollmentMap, rules);
+
+                } catch (e) {
+                    console.error(e);
+                    alert("Algorithmic Scheduling Error: " + e.message);
                 } finally {
                     showLoading(false);
                 }
             }, 50);
         });
 
-        // Render Generated Timetable Interface
-        function renderTimetableOutput(slots, enrollmentMap) {
+        function renderTimetableOutput(slots, enrollmentMap, rules) {
             timetableGrid.innerHTML = "";
-            slotSummaryText.innerText = `Distributed ${uniquePapers.size} discrete examinations across ${slots.length} chronological, conflict-free sessions.`;
+            slotSummaryText.innerText = `Distributed ${uniquePapers.size} course profiles safely across ${slots.length} optimized timeline days.`;
 
-            slots.forEach((papersInSlot, index) => {
-                const slotCard = document.createElement('div');
-                slotCard.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
+            slots.forEach((dayPapers, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
                 
-                // Card Header Banner
-                const cardHeader = document.createElement('div');
-                cardHeader.className = "bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center";
-                cardHeader.innerHTML = `
-                    <span class="font-bold text-gray-700 tracking-wide text-sm uppercase">Exam Session Slot #${index + 1}</span>
-                    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${papersInSlot.length} Papers Included</span>
+                // Identify if this day is dominated by a specific rule configuration
+                let tagHtml = `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${dayPapers.length} Papers Included</span>`;
+                
+                const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal' && c.includes(r.pattern)));
+                const isPool = dayPapers.some(c => rules.some(r => r.type === 'pool' && c.includes(r.pattern)));
+                
+                if (isUniversal) {
+                    tagHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ Universal Isolated Block</span>`;
+                } else if (isPool) {
+                    tagHtml = `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">📊 Parallel Elective Bucket</span>`;
+                }
+
+                const header = document.createElement('div');
+                header.className = "bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center";
+                header.innerHTML = `
+                    <span class="font-bold text-gray-700 text-sm uppercase">Exam Matrix Day #${index + 1}</span>
+                    ${tagHtml}
                 `;
-                slotCard.appendChild(cardHeader);
+                card.appendChild(header);
 
-                // Papers List Wrapper Box
-                const listContainer = document.createElement('div');
-                listContainer.className = "p-4 space-y-3 divide-y divide-gray-50 overflow-y-auto max-h-72 flex-1";
+                const container = document.createElement('div');
+                container.className = "p-4 space-y-3 divide-y divide-gray-100 overflow-y-auto max-h-72 flex-1";
                 
-                papersInSlot.forEach(paperCode => {
-                    const paperItem = document.createElement('div');
-                    paperItem.className = "pt-2 first:pt-0";
-                    paperItem.innerHTML = `
-                        <div class="flex justify-between items-start gap-2">
-                            <span class="font-mono text-xs font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 shrink-0">${paperCode}</span>
-                            <span class="text-xs text-gray-400 font-medium font-mono">${enrollmentMap.get(paperCode).size} Enrolled Students</span>
+                dayPapers.forEach(code => {
+                    const el = document.createElement('div');
+                    el.className = "pt-2 first:pt-0";
+                    el.innerHTML = `
+                        <div class="flex justify-between items-center gap-2">
+                            <span class="font-mono text-xs font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">${code}</span>
+                            <span class="text-xs text-gray-400 font-mono">${enrollmentMap.get(code).size} Registered</span>
                         </div>
-                        <p class="text-sm text-gray-700 font-medium mt-1">${uniquePapers.get(paperCode)}</p>
+                        <p class="text-xs font-medium text-gray-800 mt-1">${uniquePapers.get(code)}</p>
                     `;
-                    listContainer.appendChild(paperItem);
+                    container.appendChild(el);
                 });
 
-                slotCard.appendChild(listContainer);
-                timetableGrid.appendChild(slotCard);
+                card.appendChild(container);
+                timetableGrid.appendChild(card);
             });
 
             outputSection.classList.remove('hidden');
-            // Scroll user down to see the results smoothly
             outputSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Export Functionality Layer
         exportBtn.addEventListener('click', () => {
             if (!finalSlots.length) return;
+            const outputRows = [];
 
-            const flatExportRows = [];
-
-            // Convert our schedule structure into flat rows for the Excel file
-            finalSlots.forEach((paperCodes, slotIndex) => {
-                paperCodes.forEach(code => {
-                    flatExportRows.push({
-                        "Assigned Slot Index": `Slot ${slotIndex + 1}`,
-                        "Paper Code Identifier": code,
-                        "Official Paper Name": uniquePapers.get(code)
+            finalSlots.forEach((codes, dayIdx) => {
+                codes.forEach(code => {
+                    outputRows.push({
+                        "Scheduled Day": `Day ${dayIdx + 1}`,
+                        "Paper Code": code,
+                        "Paper Name": uniquePapers.get(code)
                     });
                 });
             });
 
-            const worksheet = XLSX.utils.json_to_sheet(flatExportRows);
+            const worksheet = XLSX.utils.json_to_sheet(outputRows);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Generated Schedule");
-
-            // Trigger immediate downstream binary download to target machine environment
-            XLSX.writeFile(workbook, "Conflict_Free_Exam_Timetable.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Master Timetable Plan");
+            XLSX.writeFile(workbook, "Rule_Compliant_University_Timetable.xlsx");
         });
     </script>
 </body>
