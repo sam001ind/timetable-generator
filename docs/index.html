@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Academic Timetable Scheduler with Block Isolation</title>
+    <title>Timetable Scheduler - Complete Consolidation</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Structured Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Block-separated scheduling to insulate core papers from elective pools.</p>
+                <p class="text-slate-400 mt-1">Consolidated universal tracking to bundle all functional variations of a core subject.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Core Isolation Engine:</strong> Rule-matched slots are protected. Standard subjects (e.g., <code class="text-amber-400">DSC</code>) will never bleed into language or elective buckets.
+                <strong>Rule Consolidation:</strong> Group patterns automatically pull all matching variations (e.g., <code class="text-amber-400">AECENG</code>) into a single, dedicated parallel exam day.
             </div>
         </div>
     </header>
@@ -34,18 +34,18 @@
                 </button>
             </div>
             <p class="text-sm text-gray-500 mb-4">
-                Define structural rules based on code patterns. The core scheduler creates dedicated block-out periods matching these groups to stop accidental mix-ups.
+                The scheduler processes these rules sequentially. All papers matching a pattern will be pulled out and scheduled together before the core major subjects are processed.
             </p>
             
             <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card" data-type="universal">
+                <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card" data-type="universal-group">
                     <div>
                         <div class="flex justify-between items-start mb-2">
-                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded">Universal Dedicated Day</span>
+                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded">Universal Consolidated Day</span>
                         </div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Substring Pattern Match</label>
                         <input type="text" value="AECENG" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Isolates matching items on their own explicit calendar date slot.</p>
+                        <p class="text-xs text-gray-400 mt-1.5">Collects ALL variants containing this string and forces them onto the exact same day.</p>
                     </div>
                 </div>
 
@@ -56,7 +56,7 @@
                         </div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
                         <input type="text" value="AEC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Bundles alternative choices (HIN, MAL, ARB) into an isolated parallel day block.</p>
+                        <p class="text-xs text-gray-400 mt-1.5">Bundles remaining alternative language choices (HIN, MAL, ARB) into an isolated parallel day block.</p>
                     </div>
                 </div>
 
@@ -177,7 +177,7 @@
                     <div class="flex justify-between items-start mb-2">
                         <select class="rule-type-selector bg-white text-xs font-bold border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none">
                             <option value="pool">Elective Parallel Pool</option>
-                            <option value="universal">Universal Dedicated Day</option>
+                            <option value="universal-group">Universal Consolidated Day</option>
                         </select>
                         <button class="text-gray-400 hover:text-red-500 text-sm font-bold remove-rule-btn">✕</button>
                     </div>
@@ -189,7 +189,7 @@
             const selector = card.querySelector('.rule-type-selector');
             selector.addEventListener('change', (e) => {
                 card.setAttribute('data-type', e.target.value);
-                if(e.target.value === 'universal') {
+                if(e.target.value === 'universal-group') {
                     card.className = "p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card";
                 } else {
                     card.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card";
@@ -307,7 +307,7 @@
             }
         }
 
-        // Rule-Based Group-Allocation Scheduler Engine (FIXED BLOCK ISOLATION LOGIC)
+        // Rule-Based Group-Allocation Scheduler Engine (REINFORCED CONSOLIDATION LOGIC)
         generateBtn.addEventListener('click', () => {
             showLoading(true, "Parsing structural grouping profiles...");
             
@@ -331,15 +331,19 @@
                     const structuredSlots = []; 
 
                     // ==========================================
-                    // BLOCK 1: UNIVERSAL DEDICATED STREAM DAYS
+                    // BLOCK 1: UNIVERSAL CONSOLIDATED GROUP DAYS
                     // ==========================================
-                    const universalRules = rules.filter(r => r.type === 'universal');
+                    const universalRules = rules.filter(r => r.type === 'universal-group');
                     universalRules.forEach(rule => {
+                        // Gather ALL papers that match the pattern text (e.g. AECENG)
                         const matches = remainingPapers.filter(code => code.includes(rule.pattern));
-                        matches.forEach(matchingCode => {
-                            structuredSlots.push([matchingCode]);
-                            remainingPapers = remainingPapers.filter(c => c !== matchingCode);
-                        });
+                        
+                        if (matches.length > 0) {
+                            // Combine every single matching version into ONE single day slot
+                            structuredSlots.push(matches);
+                            // Strip them from the remaining papers list
+                            remainingPapers = remainingPapers.filter(c => !matches.includes(c));
+                        }
                     });
 
                     // ==========================================
@@ -381,23 +385,21 @@
                     // ==========================================
                     // BLOCK 3: CORE DOMAIN MAJOR PAPERS (DSC)
                     // ==========================================
-                    // Sort remaining standard core papers by registration size density
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
 
                     remainingPapers.forEach(code => {
                         const currentStudents = enrollmentMap.get(code);
                         let placed = false;
 
-                        // Iterate through current days to allocate without collisions
                         for (let i = 0; i < structuredSlots.length; i++) {
                             const targetSlot = structuredSlots[i];
                             
-                            // CRITICAL REPAIR GUARD: Check if this slot was claimed by Block 1 or Block 2 rules
+                            // Check if this slot belongs to any rule pattern configured above
                             const isRuleBasedSlot = targetSlot.some(c => 
                                 rules.some(r => c.includes(r.pattern))
                             );
                             
-                            // If it belongs to an Elective or Universal group, DO NOT let core papers fall into it!
+                            // Prevent standard core subjects from slipping into rule-protected slots
                             if (isRuleBasedSlot) continue;
 
                             let conflict = false;
@@ -419,7 +421,6 @@
                             }
                         }
 
-                        // If it can't fit into an open core slot day, generate a fresh unique day for it
                         if (!placed) {
                             structuredSlots.push([code]);
                         }
@@ -447,11 +448,11 @@
                 
                 let tagHtml = `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${dayPapers.length} Papers Included</span>`;
                 
-                const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal' && c.includes(r.pattern)));
+                const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal-group' && c.includes(r.pattern)));
                 const isPool = dayPapers.some(c => rules.some(r => r.type === 'pool' && c.includes(r.pattern)));
                 
                 if (isUniversal) {
-                    tagHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ Universal Isolated Block</span>`;
+                    tagHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ Universal Consolidated Block</span>`;
                 } else if (isPool) {
                     tagHtml = `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">📊 Parallel Elective Bucket</span>`;
                 }
