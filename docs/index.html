@@ -1,1 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conflict-Free University Timetable Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900 min-h-screen">
 
+    <header class="bg-indigo-700 text-white shadow-md py-6 px-8 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Exam Timetable Scheduler</h1>
+                <p class="text-indigo-200 mt-1">Smart, overlap-free schedules generated completely in-browser.</p>
+            </div>
+            <div class="bg-indigo-600 px-4 py-2 rounded-lg border border-indigo-500 text-xs text-indigo-100 max-w-sm">
+                <strong>Core Constraint:</strong> Ensures no single student (<span class="font-mono bg-indigo-800 px-1 rounded text-white">PRN</span>) has overlapping exams (<span class="font-mono bg-indigo-800 px-1 rounded text-white">PaperCode</span>) in the same slot.
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-2">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <span>📁</span> Upload Examination Dataset
+                </h2>
+                <p class="text-sm text-gray-500 mb-4">
+                    Drop your <code class="bg-gray-100 px-1 py-0.5 rounded text-red-600">.zip</code> archive or standalone <code class="bg-gray-100 px-1 py-0.5 rounded text-green-600">.xlsx/.xls</code> file. If multiple spreadsheets exist inside the archive, they will automatically be integrated into a unified stream matching your master columns.
+                </p>
+                
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-indigo-500 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-indigo-50/30 transition-all group">
+                    <input type="file" id="fileInput" class="hidden" accept=".zip,.xlsx,.xls">
+                    <div class="space-y-2">
+                        <span class="text-4xl block group-hover:scale-110 transition-transform">📥</span>
+                        <p class="text-base font-medium text-gray-700">Drag & drop files here, or <span class="text-indigo-600 underline">browse your device</span></p>
+                        <p class="text-xs text-gray-400">Supports ZIP archives containing Excel sheets or single workbooks</p>
+                    </div>
+                </div>
+                
+                <div id="loadingState" class="hidden mt-4 items-center justify-center gap-3 text-indigo-600 font-medium bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="loadingText">Extracting and aligning matrix data structures...</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                        <span>📊</span> Dataset Matrix
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm text-gray-500">Total Raw Rows:</span>
+                            <span id="statRawRows" class="font-semibold font-mono text-gray-800">-</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm text-gray-500">Unique Students (PRN):</span>
+                            <span id="statStudents" class="font-semibold font-mono text-gray-800">-</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm text-gray-500">Unique Papers:</span>
+                            <span id="statPapers" class="font-semibold font-mono text-gray-800">-</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-sm text-gray-500">Deduplicated Links:</span>
+                            <span id="statCleanLinks" class="font-semibold font-mono text-emerald-600">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button id="generateBtn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed font-medium py-3 px-4 rounded-xl shadow-sm transition-all text-center block">
+                        ⚡ Generate Optimized Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="outputSection" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-xs border border-gray-200">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Generated Examination Timeline Matrix</h2>
+                    <p id="slotSummaryText" class="text-sm text-gray-500 mt-0.5">Calculated optimized distribution bins.</p>
+                </div>
+                <button id="exportBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
+                    <span>📥</span> Export Matrix to Excel
+                </button>
+            </div>
+
+            <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        // Data Store Registers
+        let masterDataset = [];
+        let uniquePrns = new Set();
+        let uniquePapers = new Map(); // PaperCode -> PaperName
+        let finalSlots = [];
+
+        // UI DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const loadingState = document.getElementById('loadingState');
+        const loadingText = document.getElementById('loadingText');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputSection = document.getElementById('outputSection');
+        const timetableGrid = document.getElementById('timetableGrid');
+        const exportBtn = document.getElementById('exportBtn');
+
+        // Statistics Elements
+        const statRawRows = document.getElementById('statRawRows');
+        const statStudents = document.getElementById('statStudents');
+        const statPapers = document.getElementById('statPapers');
+        const statCleanLinks = document.getElementById('statCleanLinks');
+        const slotSummaryText = document.getElementById('slotSummaryText');
+
+        // Setup File Upload Interactions
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+            if (e.dataTransfer.files.length) handleIncomingFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleIncomingFile(e.target.files[0]);
+        });
+
+        // Main Route Router for File Processing
+        async function handleIncomingFile(file) {
+            showLoading(true, "Detecting format and initialising processing arrays...");
+            resetDataState();
+            
+            try {
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (extension === 'zip') {
+                    await processZipArchive(file);
+                } else if (extension === 'xlsx' || extension === 'xls') {
+                    await processExcelWorkbook(file);
+                } else {
+                    alert("Unsupported format. Please supply an standard Excel spreadsheet or ZIP wrapper.");
+                    showLoading(false);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Runtime error encountered parsing structured binary spreadsheet formats: " + err.message);
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show, text = "") {
+            if (show) {
+                loadingText.innerText = text;
+                loadingState.classList.remove('hidden');
+                loadingState.classList.add('flex');
+            } else {
+                loadingState.classList.add('hidden');
+                loadingState.classList.remove('flex');
+            }
+        }
+
+        function resetDataState() {
+            masterDataset = [];
+            uniquePrns.clear();
+            uniquePapers.clear();
+            generateBtn.disabled = true;
+            outputSection.classList.add('hidden');
+            timetableGrid.innerHTML = "";
+            
+            statRawRows.innerText = "-";
+            statStudents.innerText = "-";
+            statPapers.innerText = "-";
+            statCleanLinks.innerText = "-";
+        }
+
+        // Processing Logic: Extract items from within a ZIP file
+        async function processZipArchive(zipFile) {
+            showLoading(true, "Decompressing ZIP content package contents...");
+            const jszip = new JSZip();
+            const unzipped = await jszip.loadAsync(zipFile);
+            
+            let filesFound = 0;
+            for (const filename of Object.keys(unzipped.files)) {
+                if (!unzipped.files[filename].dir && (filename.endsWith('.xlsx') || filename.endsWith('.xls'))) {
+                    showLoading(true, `Unpacking and parsing nested matrix worksheet: ${filename}`);
+                    const fileBlob = await unzipped.files[filename].async("blob");
+                    await processExcelWorkbook(fileBlob);
+                    filesFound++;
+                }
+            }
+            if (filesFound === 0) {
+                throw new Error("Target payload void. No valid .xlsx or .xls files located inside the root or subfolders of the zip file.");
+            }
+            processAndSummarizeCleanData();
+        }
+
+        // Processing Logic: Parse sheet to memory structures
+        async function processExcelWorkbook(fileBlob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // Parse rows out of all tabs/worksheets in this file
+                        workbook.SheetNames.forEach(sheetName => {
+                            const sheet = workbook.Sheets[sheetName];
+                            const rawJson = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                            masterDataset = masterDataset.concat(rawJson);
+                        });
+                        resolve();
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = () => reject(new Error("File tracking/reading read stream anomaly."));
+                reader.readAsArrayBuffer(fileBlob);
+            }).then(() => {
+                // If it was parsed directly (not through ZIP helper loop), invoke metrics buildout immediately
+                if (masterDataset.length > 0 && !loadingText.innerText.includes("nested matrix worksheet")) {
+                    processAndSummarizeCleanData();
+                }
+            });
+        }
+
+        // Deduplication & Alignment Mapping Layer
+        function processAndSummarizeCleanData() {
+            showLoading(true, "Aligning row headers and filtering duplicate entries...");
+            
+            const processedLinks = new Set();
+            const validDataMatrix = [];
+
+            for (let i = 0; i < masterDataset.length; i++) {
+                const row = masterDataset[i];
+                // Extract unique fields. Trim any empty string configurations safely
+                const prn = row["PRN"] ? String(row["PRN"]).trim() : "";
+                const paperCode = row["PaperCode"] ? String(row["PaperCode"]).trim() : "";
+                const paperName = row["PaperName"] ? String(row["PaperName"]).trim() : `Paper ${paperCode}`;
+
+                if (!prn || !paperCode) continue; // Bypass structural records missing identifiers
+
+                // Compound primary registration check to drop structural duplicates
+                const compoundKey = `${prn}_${paperCode}`;
+                if (!processedLinks.has(compoundKey)) {
+                    processedLinks.add(compoundKey);
+                    uniquePrns.add(prn);
+                    uniquePapers.set(paperCode, paperName);
+                    
+                    validDataMatrix.push({
+                        prn: prn,
+                        paperCode: paperCode,
+                        paperName: paperName,
+                        fullRowData: row
+                    });
+                }
+            }
+
+            // Update state engine
+            masterDataset = validDataMatrix;
+
+            // UI Metrics Output Assignment
+            statRawRows.innerText = masterDataset.length + " rows mapped";
+            statStudents.innerText = uniquePrns.size;
+            statPapers.innerText = uniquePapers.size;
+            statCleanLinks.innerText = processedLinks.size + " connections";
+
+            showLoading(false);
+            if (masterDataset.length > 0) {
+                generateBtn.disabled = false;
+            } else {
+                alert("The dataset headers parsed successfully, but zero complete valid data items holding 'PRN' and 'PaperCode' keys were registered.");
+            }
+        }
+
+        // Algorithmic Constraint Implementation (Greedy Graph-Coloring Engine)
+        generateBtn.addEventListener('click', () => {
+            showLoading(true, "Compiling enrollment maps and solving optimization graph...");
+            
+            setTimeout(() => {
+                try {
+                    // 1. Build inverted indexing profiles: Map every exam paper to the students enrolled in it
+                    const paperToStudentsMap = new Map(); // PaperCode -> Set of PRNs
+                    uniquePapers.forEach((name, code) => {
+                        paperToStudentsMap.set(code, new Set());
+                    });
+
+                    masterDataset.forEach(record => {
+                        paperToStudentsMap.get(record.paperCode).add(record.prn);
+                    });
+
+                    // 2. Sort papers in descending order based on enrollment numbers (heuristics layer)
+                    const sortedPapers = Array.from(uniquePapers.keys()).sort((a, b) => {
+                        return paperToStudentsMap.get(b).size - paperToStudentsMap.get(a).size;
+                    });
+
+                    // 3. Greedy Graph Coloring Iteration Pass
+                    const allocatedSlots = []; // Array of arrays containing assigned PaperCodes
+
+                    sortedPapers.forEach(currentPaperCode => {
+                        const currentPaperStudents = paperToStudentsMap.get(currentPaperCode);
+                        let assignedToExistingSlot = false;
+
+                        // Check each existing slot to see if this paper can fit without causing an overlap
+                        for (let i = 0; i < allocatedSlots.length; i++) {
+                            const activeSlotPapers = allocatedSlots[i];
+                            let hasConflict = false;
+
+                            // If any paper already in this slot shares a student with the current paper, it's a conflict
+                            for (const existingPaperCode of activeSlotPapers) {
+                                const existingPaperStudents = paperToStudentsMap.get(existingPaperCode);
+                                
+                                // Intersection logic: check if sets share an asset element
+                                for (const studentPrn of currentPaperStudents) {
+                                    if (existingPaperStudents.has(studentPrn)) {
+                                        hasConflict = true;
+                                        break;
+                                    }
+                                }
+                                if (hasConflict) break;
+                            }
+
+                            // Safe assignment pathway if zero student collisions are registered
+                            if (!hasConflict) {
+                                activeSlotPapers.push(currentPaperCode);
+                                assignedToExistingSlot = true;
+                                break;
+                            }
+                        }
+
+                        // If the current paper conflicts with all existing slots, create a new slot for it
+                        if (!assignedToExistingSlot) {
+                            allocatedSlots.push([currentPaperCode]);
+                        }
+                    });
+
+                    finalSlots = allocatedSlots;
+                    renderTimetableOutput(finalSlots, paperToStudentsMap);
+                } catch (err) {
+                    console.error(err);
+                    alert("Algorithmic crash encountered: " + err.message);
+                } finally {
+                    showLoading(false);
+                }
+            }, 50);
+        });
+
+        // Render Generated Timetable Interface
+        function renderTimetableOutput(slots, enrollmentMap) {
+            timetableGrid.innerHTML = "";
+            slotSummaryText.innerText = `Distributed ${uniquePapers.size} discrete examinations across ${slots.length} chronological, conflict-free sessions.`;
+
+            slots.forEach((papersInSlot, index) => {
+                const slotCard = document.createElement('div');
+                slotCard.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
+                
+                // Card Header Banner
+                const cardHeader = document.createElement('div');
+                cardHeader.className = "bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center";
+                cardHeader.innerHTML = `
+                    <span class="font-bold text-gray-700 tracking-wide text-sm uppercase">Exam Session Slot #${index + 1}</span>
+                    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${papersInSlot.length} Papers Included</span>
+                `;
+                slotCard.appendChild(cardHeader);
+
+                // Papers List Wrapper Box
+                const listContainer = document.createElement('div');
+                listContainer.className = "p-4 space-y-3 divide-y divide-gray-50 overflow-y-auto max-h-72 flex-1";
+                
+                papersInSlot.forEach(paperCode => {
+                    const paperItem = document.createElement('div');
+                    paperItem.className = "pt-2 first:pt-0";
+                    paperItem.innerHTML = `
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="font-mono text-xs font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 shrink-0">${paperCode}</span>
+                            <span class="text-xs text-gray-400 font-medium font-mono">${enrollmentMap.get(paperCode).size} Enrolled Students</span>
+                        </div>
+                        <p class="text-sm text-gray-700 font-medium mt-1">${uniquePapers.get(paperCode)}</p>
+                    `;
+                    listContainer.appendChild(paperItem);
+                });
+
+                slotCard.appendChild(listContainer);
+                timetableGrid.appendChild(slotCard);
+            });
+
+            outputSection.classList.remove('hidden');
+            // Scroll user down to see the results smoothly
+            outputSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Export Functionality Layer
+        exportBtn.addEventListener('click', () => {
+            if (!finalSlots.length) return;
+
+            const flatExportRows = [];
+
+            // Convert our schedule structure into flat rows for the Excel file
+            finalSlots.forEach((paperCodes, slotIndex) => {
+                paperCodes.forEach(code => {
+                    flatExportRows.push({
+                        "Assigned Slot Index": `Slot ${slotIndex + 1}`,
+                        "Paper Code Identifier": code,
+                        "Official Paper Name": uniquePapers.get(code)
+                    });
+                });
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(flatExportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Generated Schedule");
+
+            // Trigger immediate downstream binary download to target machine environment
+            XLSX.writeFile(workbook, "Conflict_Free_Exam_Timetable.xlsx");
+        });
+    </script>
+</body>
+</html>
