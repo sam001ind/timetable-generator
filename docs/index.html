@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timetable Scheduler - Complete Consolidation</title>
+    <title>University Timetable Scheduler - Dynamic Group Dropdowns</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,77 +14,31 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Structured Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Consolidated universal tracking to bundle all functional variations of a core subject.</p>
+                <p class="text-slate-400 mt-1">Smart scheduling with auto-detected group dropdowns from your dataset.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Rule Consolidation:</strong> Group patterns automatically pull all matching variations (e.g., <code class="text-amber-400">AECENG</code>) into a single, dedicated parallel exam day.
+                <strong>Workflow:</strong> 1. Upload your ZIP/Excel file first $\rightarrow$ 2. Select detected categories from the dropdown rules $\rightarrow$ 3. Generate your conflict-free timetable.
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         
-        <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <span>⚙️</span> Step 1: Configure Course Allocation & Grouping Rules
-                </h2>
-                <button id="addRuleBtn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold text-xs py-1.5 px-3 rounded-lg border border-indigo-200 transition-all">
-                    + Add New Custom Rule
-                </button>
-            </div>
-            <p class="text-sm text-gray-500 mb-4">
-                The scheduler processes these rules sequentially. All papers matching a pattern will be pulled out and scheduled together before the core major subjects are processed.
-            </p>
-            
-            <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card" data-type="universal-group">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded">Universal Consolidated Day</span>
-                        </div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Substring Pattern Match</label>
-                        <input type="text" value="AECENG" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Collects ALL variants containing this string and forces them onto the exact same day.</p>
-                    </div>
-                </div>
-
-                <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card" data-type="pool">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded">Elective Parallel Pool</span>
-                        </div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
-                        <input type="text" value="AEC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Bundles remaining alternative language choices (HIN, MAL, ARB) into an isolated parallel day block.</p>
-                    </div>
-                </div>
-
-                <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card" data-type="pool">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded">Elective Parallel Pool</span>
-                        </div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Group Identification Prefix</label>
-                        <input type="text" value="MDC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                        <p class="text-xs text-gray-400 mt-1.5">Forces all matching MDC options to combine into an isolated parallel day block.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-2">
                 <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                    <span>📁</span> Step 2: Drop & Import ZIP or Excel Files
+                    <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
+                <p class="text-sm text-gray-500 mb-4">
+                    Upload your file first. The system will scan your code patterns and instantly build your configuration dropdown choices.
+                </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
                     <input type="file" id="fileInput" class="hidden" accept=".zip,.xlsx,.xls">
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
                         <p class="text-base font-medium text-gray-700">Drop ZIP or single Excel datasets here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Processes automated horizontal merging across matching system headers</p>
+                        <p class="text-xs text-gray-400">Merges matching data sheets across matching rows automatically</p>
                     </div>
                 </div>
                 
@@ -93,7 +47,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span id="loadingText">Processing spreadsheet schema structures...</span>
+                    <span id="loadingText">Processing spreadsheet structures...</span>
                 </div>
             </div>
 
@@ -126,6 +80,23 @@
             </div>
         </div>
 
+        <div id="rulesPanel" class="opacity-40 pointer-events-none bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8 transition-all duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <span>⚙️</span> Step 2: Configure Allocation Rules (Auto-Detected Options Available)
+                </h2>
+                <button id="addRuleBtn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold text-xs py-1.5 px-3 rounded-lg border border-indigo-200 transition-all">
+                    + Add New Allocation Rule
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">
+                Select your groupings below from the drop-downs. The drop-down options are populated automatically from your file data patterns.
+            </p>
+            
+            <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </div>
+
         <div id="outputSection" class="hidden space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-xs border border-gray-200">
                 <div>
@@ -147,6 +118,7 @@
         let masterDataset = [];
         let uniquePrns = new Set();
         let uniquePapers = new Map(); // PaperCode -> PaperName
+        let detectedPrefixes = [];    // Extracted automatically from file data
         let finalSlots = [];
 
         // DOM Handles
@@ -155,50 +127,18 @@
         const loadingState = document.getElementById('loadingState');
         const loadingText = document.getElementById('loadingText');
         const generateBtn = document.getElementById('generateBtn');
+        const rulesPanel = document.getElementById('rulesPanel');
+        const rulesContainer = document.getElementById('rulesContainer');
         const outputSection = document.getElementById('outputSection');
         const timetableGrid = document.getElementById('timetableGrid');
         const exportBtn = document.getElementById('exportBtn');
         const addRuleBtn = document.getElementById('addRuleBtn');
-        const rulesContainer = document.getElementById('rulesContainer');
 
         // Metrics Handles
         const statRawRows = document.getElementById('statRawRows');
         const statStudents = document.getElementById('statStudents');
         const statPapers = document.getElementById('statPapers');
         const slotSummaryText = document.getElementById('slotSummaryText');
-
-        // Dynamic Rule Builder Handler
-        addRuleBtn.addEventListener('click', () => {
-            const card = document.createElement('div');
-            card.className = "p-4 rounded-xl border border-indigo-200 bg-indigo-50/20 relative flex flex-col justify-between rule-card";
-            card.setAttribute('data-type', 'pool');
-            card.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-2">
-                        <select class="rule-type-selector bg-white text-xs font-bold border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none">
-                            <option value="pool">Elective Parallel Pool</option>
-                            <option value="universal-group">Universal Consolidated Day</option>
-                        </select>
-                        <button class="text-gray-400 hover:text-red-500 text-sm font-bold remove-rule-btn">✕</button>
-                    </div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pattern Match Token</label>
-                    <input type="text" placeholder="e.g. VAC" class="rule-pattern w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-            `;
-            
-            const selector = card.querySelector('.rule-type-selector');
-            selector.addEventListener('change', (e) => {
-                card.setAttribute('data-type', e.target.value);
-                if(e.target.value === 'universal-group') {
-                    card.className = "p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card";
-                } else {
-                    card.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card";
-                }
-            });
-
-            card.querySelector('.remove-rule-btn').addEventListener('click', () => card.remove());
-            rulesContainer.appendChild(card);
-        });
 
         // Initialize drag & drop events
         dropZone.addEventListener('click', () => fileInput.click());
@@ -218,7 +158,10 @@
             masterDataset = [];
             uniquePrns.clear();
             uniquePapers.clear();
+            detectedPrefixes = [];
             generateBtn.disabled = true;
+            rulesContainer.innerHTML = "";
+            rulesPanel.classList.add('opacity-40', 'pointer-events-none');
             outputSection.classList.add('hidden');
             
             try {
@@ -235,7 +178,7 @@
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     await extractSpreadsheetRows(file);
                 } else {
-                    alert("Format error. Please feed the generator an .xlsx workbook or a compressed .zip folder.");
+                    alert("Format error. Please upload an .xlsx workbook or a compressed .zip folder.");
                     showLoading(false);
                     return;
                 }
@@ -266,9 +209,10 @@
         }
 
         function alignAndConsolidateData() {
-            showLoading(true, "Deduplicating entries across PRN and PaperCode metrics...");
+            showLoading(true, "Deduplicating entries and analyzing course code structures...");
             const filteringMap = new Set();
             const consolidated = [];
+            const prefixesSet = new Set();
 
             for (let i = 0; i < masterDataset.length; i++) {
                 const r = masterDataset[i];
@@ -284,17 +228,112 @@
                     uniquePrns.add(prn);
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
+
+                    // Dynamically scan for structural course groupings from the PaperCode text
+                    // Handles patterns like KU2AECENG106 -> extracts AECENG, AEC, MDC, DSC prefixes automatically
+                    extractSmartPrefixes(code, prefixesSet);
                 }
             }
 
             masterDataset = consolidated;
+            detectedPrefixes = Array.from(prefixesSet).sort();
+
             statRawRows.innerText = masterDataset.length + " Rows Processed";
             statStudents.innerText = uniquePrns.size;
             statPapers.innerText = uniquePapers.size;
 
             showLoading(false);
-            if (masterDataset.length > 0) generateBtn.disabled = false;
+            
+            if (masterDataset.length > 0) {
+                generateBtn.disabled = false;
+                // Activate configuration steps and construct baseline rules
+                rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
+                buildDefaultPresetRules();
+            }
         }
+
+        // Helper: Extract valid, meaningful sub-group tags from text codes
+        function extractSmartPrefixes(code, prefixesSet) {
+            // Find where the alphabetical block sits after university codes (e.g., KU2[AECENG]105)
+            const match = code.match(/[A-Z]+/g);
+            if (match) {
+                match.forEach(alpha => {
+                    if (alpha.length >= 3) {
+                        prefixesSet.add(alpha); // e.g., "AECENG", "AEC", "MDC", "DSC"
+                        // If it's a long combined string like AECENG, add its sub-prefix "AEC" too
+                        if (alpha.startsWith("AEC") && alpha.length > 3) {
+                            prefixesSet.add("AEC");
+                        }
+                    }
+                });
+            }
+        }
+
+        // Generate drop-down card options dynamically
+        function createRuleCardElement(defaultType, defaultPattern = "") {
+            const card = document.createElement('div');
+            const bgClass = defaultType === 'universal-group' ? 'border-amber-200 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/40';
+            card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
+            card.setAttribute('data-type', defaultType);
+
+            // Construct drop-down choices from scanned dataset entries
+            let selectOptionsHtml = `<option value="">-- Choose Category --</option>`;
+            detectedPrefixes.forEach(prefix => {
+                const selectedAttr = prefix === defaultPattern ? 'selected' : '';
+                selectOptionsHtml += `<option value="${prefix}" ${selectedAttr}>${prefix}</option>`;
+            });
+
+            const isUniversalSelected = defaultType === 'universal-group' ? 'selected' : '';
+            const isPoolSelected = defaultType === 'pool' ? 'selected' : '';
+
+            card.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start mb-2">
+                        <select class="rule-type-selector bg-white text-xs font-bold border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none">
+                            <option value="pool" ${isPoolSelected}>Elective Parallel Pool</option>
+                            <option value="universal-group" ${isUniversalSelected}>Universal Consolidated Day</option>
+                        </select>
+                        <button class="text-gray-400 hover:text-red-500 text-sm font-bold remove-rule-btn">✕</button>
+                    </div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Select Group Category</label>
+                    <select class="rule-pattern-dropdown w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        ${selectOptionsHtml}
+                    </select>
+                </div>
+            `;
+
+            // Style updating on rule selector type mutations
+            const typeSelector = card.querySelector('.rule-type-selector');
+            typeSelector.addEventListener('change', (e) => {
+                card.setAttribute('data-type', e.target.value);
+                if(e.target.value === 'universal-group') {
+                    card.className = "p-4 rounded-xl border border-amber-200 bg-amber-50/40 relative flex flex-col justify-between rule-card";
+                } else {
+                    card.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 relative flex flex-col justify-between rule-card";
+                }
+            });
+
+            card.querySelector('.remove-rule-btn').addEventListener('click', () => card.remove());
+            rulesContainer.appendChild(card);
+        }
+
+        // Build Default Presets from dynamically scanned options
+        function buildDefaultPresetRules() {
+            rulesContainer.innerHTML = "";
+            
+            // Auto-detect and pre-load baseline targets
+            if (detectedPrefixes.includes("AECENG")) {
+                createRuleCardElement('universal-group', 'AECENG');
+            }
+            if (detectedPrefixes.includes("AEC")) {
+                createRuleCardElement('pool', 'AEC');
+            }
+            if (detectedPrefixes.includes("MDC")) {
+                createRuleCardElement('pool', 'MDC');
+            }
+        }
+
+        addRuleBtn.addEventListener('click', () => createRuleCardElement('pool', ''));
 
         function showLoading(show, txt = "") {
             if (show) {
@@ -307,22 +346,20 @@
             }
         }
 
-        // Rule-Based Group-Allocation Scheduler Engine (REINFORCED CONSOLIDATION LOGIC)
+        // Scheduler Allocation Engine Engine
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Parsing structural grouping profiles...");
+            showLoading(true, "Executing dynamic rule allocation passes...");
             
             setTimeout(() => {
                 try {
-                    // 1. Gather rules from configuration panel
+                    // Gather configurations from the dropdown fields
                     const rules = [];
                     document.querySelectorAll('.rule-card').forEach(card => {
-                        const selector = card.querySelector('.rule-type-selector');
-                        const type = selector ? selector.value : card.getAttribute('data-type');
-                        const pattern = card.querySelector('.rule-pattern').value.trim();
+                        const type = card.querySelector('.rule-type-selector').value;
+                        const pattern = card.querySelector('.rule-pattern-dropdown').value;
                         if (pattern) rules.push({ type, pattern });
                     });
 
-                    // 2. Map inverse registries (PaperCode -> Student PRNs)
                     const enrollmentMap = new Map();
                     uniquePapers.forEach((name, code) => enrollmentMap.set(code, new Set()));
                     masterDataset.forEach(row => enrollmentMap.get(row.code).add(row.prn));
@@ -330,25 +367,17 @@
                     let remainingPapers = Array.from(uniquePapers.keys());
                     const structuredSlots = []; 
 
-                    // ==========================================
-                    // BLOCK 1: UNIVERSAL CONSOLIDATED GROUP DAYS
-                    // ==========================================
+                    // BLOCK 1: UNIVERSAL CONSOLIDATED DAYS
                     const universalRules = rules.filter(r => r.type === 'universal-group');
                     universalRules.forEach(rule => {
-                        // Gather ALL papers that match the pattern text (e.g. AECENG)
                         const matches = remainingPapers.filter(code => code.includes(rule.pattern));
-                        
                         if (matches.length > 0) {
-                            // Combine every single matching version into ONE single day slot
                             structuredSlots.push(matches);
-                            // Strip them from the remaining papers list
                             remainingPapers = remainingPapers.filter(c => !matches.includes(c));
                         }
                     });
 
-                    // ==========================================
-                    // BLOCK 2: ELECTIVE BUCKET POOLS (PARALLEL DAYS)
-                    // ==========================================
+                    // BLOCK 2: ELECTIVE PARALLEL POOLS
                     const poolRules = rules.filter(r => r.type === 'pool');
                     poolRules.forEach(rule => {
                         const matches = remainingPapers.filter(code => code.includes(rule.pattern));
@@ -382,9 +411,7 @@
                         }
                     });
 
-                    // ==========================================
                     // BLOCK 3: CORE DOMAIN MAJOR PAPERS (DSC)
-                    // ==========================================
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
 
                     remainingPapers.forEach(code => {
@@ -393,13 +420,10 @@
 
                         for (let i = 0; i < structuredSlots.length; i++) {
                             const targetSlot = structuredSlots[i];
-                            
-                            // Check if this slot belongs to any rule pattern configured above
                             const isRuleBasedSlot = targetSlot.some(c => 
                                 rules.some(r => c.includes(r.pattern))
                             );
                             
-                            // Prevent standard core subjects from slipping into rule-protected slots
                             if (isRuleBasedSlot) continue;
 
                             let conflict = false;
