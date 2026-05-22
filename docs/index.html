@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Two-Tier Group Isolation Engine</title>
+    <title>University Timetable Scheduler - Advanced Multi-Tier Reporting</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Isolate by main structural groups and specific language/domain subgroups side-by-side.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks and generate matching dual-report plan sheets.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Hierarchical Matrix Logic:</strong> Allows grouping the entire main category (e.g., <code class="text-amber-400">AEC -> ALL</code>) or singling out customized sub-branches (e.g., <code class="text-emerald-400">AEC -> ENG</code>) for custom day blocks.
+                <strong>Reporting Engine Active:</strong> Generates the master schedule and individual student reports containing personalized identity markers, seating strings, venue codes, and day indices.
             </div>
         </div>
     </header>
@@ -30,7 +30,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your dataset. The application will immediately break down code strings into structural components and map child extensions.
+                    Import your dataset first. The system will cleanly scan and break down code vectors into structural categories and sub-branches.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -38,7 +38,7 @@
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
                         <p class="text-base font-medium text-gray-700">Drop ZIP or single Excel datasets here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Decompresses folders and aligns column datasets client-side</p>
+                        <p class="text-xs text-gray-400">Decompresses folders and parses multi-sheet workbooks in the browser</p>
                     </div>
                 </div>
                 
@@ -98,14 +98,19 @@
         </div>
 
         <div id="outputSection" class="hidden space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-xs border border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl shadow-xs border border-gray-200">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">Rule-Aligned Allocation Matrices</h2>
                     <p id="slotSummaryText" class="text-sm text-gray-500 mt-0.5">Calculated optimized distribution bins.</p>
                 </div>
-                <button id="exportBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
-                    <span>📊</span> Download Timetable Document
-                </button>
+                <div class="flex flex-wrap gap-3">
+                    <button id="exportBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
+                        <span>🗓️</span> Export Master Plan
+                    </button>
+                    <button id="exportStudentBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
+                        <span>📊</span> Download Student-Wise Report
+                    </button>
+                </div>
             </div>
 
             <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,10 +123,9 @@
         let masterDataset = [];
         let uniquePrns = new Set();
         let uniquePapers = new Map(); // PaperCode -> PaperName
-        
-        // Two-Tier Categorization Map Register: MainGroup -> Set of Subgroups (e.g. "AEC" -> {"ENG", "HIN", "MAL"})
         let hierarchicalMap = new Map();
         let finalSlots = [];
+        let paperToSlotIndexMap = new Map(); // PaperCode -> Day Index string for report tracking
 
         // DOM Handles
         const dropZone = document.getElementById('dropZone');
@@ -134,6 +138,7 @@
         const outputSection = document.getElementById('outputSection');
         const timetableGrid = document.getElementById('timetableGrid');
         const exportBtn = document.getElementById('exportBtn');
+        const exportStudentBtn = document.getElementById('exportStudentBtn');
         const addRuleBtn = document.getElementById('addRuleBtn');
 
         // Metrics Handles
@@ -161,6 +166,7 @@
             uniquePrns.clear();
             uniquePapers.clear();
             hierarchicalMap.clear();
+            paperToSlotIndexMap.clear();
             generateBtn.disabled = true;
             rulesContainer.innerHTML = "";
             rulesPanel.classList.add('opacity-40', 'pointer-events-none');
@@ -180,7 +186,7 @@
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     await extractSpreadsheetRows(file);
                 } else {
-                    alert("Format error. Please feed the generator an .xlsx workbook or a compressed .zip folder.");
+                    alert("Format error. Please feed the generator a valid .xlsx workbook or a compressed .zip folder.");
                     showLoading(false);
                     return;
                 }
@@ -215,7 +221,6 @@
             const filteringMap = new Set();
             const consolidated = [];
 
-            // Standard baseline structures to look for
             const baseStructuralKeys = ["AEC", "MDC", "SEC", "VAC", "DSC"];
             baseStructuralKeys.forEach(k => hierarchicalMap.set(k, new Set()));
 
@@ -234,8 +239,6 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Execute Two-Tier Structural Parse Map
-                    // e.g. KU2AECENG106 -> Matches "AEC" as Main Group and extracts "ENG" as Subgroup
                     const alphaMatches = code.match(/[A-Z]+/g);
                     if (alphaMatches) {
                         alphaMatches.forEach(chunk => {
@@ -244,7 +247,7 @@
                                     if (chunk.startsWith(baseKey)) {
                                         const subGroupPart = chunk.substring(baseKey.length);
                                         if (subGroupPart.length > 0) {
-                                            hierarchicalMap.get(baseKey).add(subGroupPart); // Adds e.g. "ENG", "HIN"
+                                            hierarchicalMap.get(baseKey).add(subGroupPart);
                                         }
                                     }
                                 });
@@ -255,13 +258,11 @@
             }
 
             masterDataset = consolidated;
-
             statRawRows.innerText = masterDataset.length + " Rows Processed";
             statStudents.innerText = uniquePrns.size;
             statPapers.innerText = uniquePapers.size;
 
             showLoading(false);
-            
             if (masterDataset.length > 0) {
                 generateBtn.disabled = false;
                 rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
@@ -269,14 +270,12 @@
             }
         }
 
-        // Two-Tier Dynamic Dropdown Card Builder UI Layer
         function createHierarchicalRuleCard(defaultType, defaultMain = "", defaultSub = "") {
             const card = document.createElement('div');
             const bgClass = defaultType === 'universal-group' ? 'border-amber-200 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/40';
             card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
             card.setAttribute('data-type', defaultType);
 
-            // Populate Dropdown 1: Main Categories
             let mainOptionsHtml = `<option value="">-- Select Main Group --</option>`;
             Array.from(hierarchicalMap.keys()).forEach(mainKey => {
                 const selectedAttr = mainKey === defaultMain ? 'selected' : '';
@@ -317,7 +316,6 @@
             const subSelect = card.querySelector('.sub-group-select');
             const typeSelector = card.querySelector('.rule-type-selector');
 
-            // Handler to populate Dropdown 2 when Dropdown 1 is selected
             function updateSubgroupOptions(selectedMain, currentSubVal = "") {
                 if (!selectedMain || !hierarchicalMap.has(selectedMain)) {
                     subSelect.innerHTML = `<option value="">-- Choose Subgroup --</option>`;
@@ -327,7 +325,6 @@
 
                 subSelect.disabled = false;
                 let subOptionsHtml = `<option value="ALL">ALL Subgroups (Entire Core Block)</option>`;
-                
                 const subSet = hierarchicalMap.get(selectedMain);
                 Array.from(subSet).sort().forEach(subKey => {
                     const selectedAttr = subKey === currentSubVal ? 'selected' : '';
@@ -336,7 +333,6 @@
                 subSelect.innerHTML = subOptionsHtml;
             }
 
-            // Sync selectors on type switches
             typeSelector.addEventListener('change', (e) => {
                 card.setAttribute('data-type', e.target.value);
                 card.className = e.target.value === 'universal-group' 
@@ -347,27 +343,17 @@
             mainSelect.addEventListener('change', (e) => updateSubgroupOptions(e.target.value));
             card.querySelector('.remove-rule-btn').addEventListener('click', () => card.remove());
 
-            // Initialize presets if parameters are passed in
-            if (defaultMain) {
-                updateSubgroupOptions(defaultMain, defaultSub);
-            }
-
+            if (defaultMain) updateSubgroupOptions(defaultMain, defaultSub);
             rulesContainer.appendChild(card);
         }
 
-        // Initialize Standard University Configurations Out of Box
         function buildDefaultPresetRules() {
             rulesContainer.innerHTML = "";
-            
-            // Preset 1: AEC -> ENG (Universal Consolidated Day)
             if (hierarchicalMap.get("AEC")?.has("ENG")) {
                 createHierarchicalRuleCard('universal-group', 'AEC', 'ENG');
             }
-            // Preset 2: AEC -> ALL remaining options running in parallel
             createHierarchicalRuleCard('pool', 'AEC', 'ALL');
-            // Preset 3: MDC -> ALL elective choices running in parallel
             createHierarchicalRuleCard('pool', 'MDC', 'ALL');
-            // Preset 4: SEC -> ALL choices running in parallel
             createHierarchicalRuleCard('pool', 'SEC', 'ALL');
         }
 
@@ -384,22 +370,18 @@
             }
         }
 
-        // Rule-Based Group-Allocation Scheduler Engine (REINFORCED TWO-TIER PASS)
+        // Processing Pipeline
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Executing priority block allocation routines...");
+            showLoading(true, "Executing structural allocation routines...");
             
             setTimeout(() => {
                 try {
-                    // Extract execution definitions from the two-tier layout controls
                     const rules = [];
                     document.querySelectorAll('.rule-card').forEach(card => {
                         const type = card.querySelector('.rule-type-selector').value;
                         const mainGroup = card.querySelector('.main-group-select').value;
                         const subGroup = card.querySelector('.sub-group-select').value;
-                        
-                        if (mainGroup && subGroup) {
-                            rules.push({ type, mainGroup, subGroup });
-                        }
+                        if (mainGroup && subGroup) rules.push({ type, mainGroup, subGroup });
                     });
 
                     const enrollmentMap = new Map();
@@ -409,94 +391,61 @@
                     let remainingPapers = Array.from(uniquePapers.keys());
                     const structuredSlots = []; 
 
-                    // Helper checker function to check if a paper code matches a specific rule definition
                     function matchesTwoTierRule(paperCode, rule) {
-                        // Check if the paper contains the main key (e.g. AEC)
                         if (!paperCode.includes(rule.mainGroup)) return false;
-                        
-                        // If rule is set to catch ALL variations within that main block
                         if (rule.subGroup === "ALL") return true;
-                        
-                        // Explicit matching check (e.g. contains main group AEC and sub group ENG -> AECENG)
-                        const fullTargetString = rule.mainGroup + rule.subGroup;
-                        return paperCode.includes(fullTargetString);
+                        return paperCode.includes(rule.mainGroup + rule.subGroup);
                     }
 
-                    // ==========================================
                     // PASS 1: UNIVERSAL CONSOLIDATED GROUPS
-                    // ==========================================
-                    const universalRules = rules.filter(r => r.type === 'universal-group');
-                    universalRules.forEach(rule => {
+                    rules.filter(r => r.type === 'universal-group').forEach(rule => {
                         const matches = remainingPapers.filter(code => matchesTwoTierRule(code, rule));
                         if (matches.length > 0) {
-                            structuredSlots.push(matches); // Forces all matches into a single unified session day
+                            structuredSlots.push(matches);
                             remainingPapers = remainingPapers.filter(c => !matches.includes(c));
                         }
                     });
 
-                    // ==========================================
                     // PASS 2: ELECTIVE PARALLEL POOLS
-                    // ==========================================
-                    const poolRules = rules.filter(r => r.type === 'pool');
-                    poolRules.forEach(rule => {
+                    rules.filter(r => r.type === 'pool').forEach(rule => {
                         const matches = remainingPapers.filter(code => matchesTwoTierRule(code, rule));
                         if (matches.length > 0) {
                             const conflictVerifiedPool = [];
-                            
                             matches.forEach(code => {
                                 const codeStudents = enrollmentMap.get(code);
                                 let safeToPool = true;
-
                                 for(const allocated of conflictVerifiedPool) {
                                     const allocatedStudents = enrollmentMap.get(allocated);
                                     for(const prn of codeStudents) {
-                                        if(allocatedStudents.has(prn)) {
-                                            safeToPool = false; 
-                                            break;
-                                        }
+                                        if(allocatedStudents.has(prn)) { safeToPool = false; break; }
                                     }
                                     if(!safeToPool) break;
                                 }
-
                                 if(safeToPool) {
                                     conflictVerifiedPool.push(code);
                                     remainingPapers = remainingPapers.filter(c => c !== code);
                                 }
                             });
-
-                            if(conflictVerifiedPool.length > 0) {
-                                structuredSlots.push(conflictVerifiedPool);
-                            }
+                            if(conflictVerifiedPool.length > 0) structuredSlots.push(conflictVerifiedPool);
                         }
                     });
 
-                    // ==========================================
                     // PASS 3: CORE DOMAIN MAJOR PAPERS (DSC / FALLBACK)
-                    // ==========================================
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
-
                     remainingPapers.forEach(code => {
                         const currentStudents = enrollmentMap.get(code);
                         let placed = false;
 
                         for (let i = 0; i < structuredSlots.length; i++) {
                             const targetSlot = structuredSlots[i];
-                            
-                            // Guard check: Avoid mixing core major subjects into slots dedicated to custom rules
-                            const isRuleBasedSlot = targetSlot.some(c => 
-                                rules.some(rule => matchesTwoTierRule(c, rule))
-                            );
-                            
+                            const isRuleBasedSlot = targetSlot.some(c => rules.some(rule => matchesTwoTierRule(c, rule)));
                             if (isRuleBasedSlot) continue;
 
                             let conflict = false;
                             for (const existingCode of targetSlot) {
                                 const existingStudents = enrollmentMap.get(existingCode);
                                 for (const student of currentStudents) {
-                                    if (existingStudents.has(student)) {
-                                        conflict = true;
-                                        break;
-                                    }
+                                    if (existingStudents.has(student)) { conflict = true; break; }
                                 }
                                 if (conflict) break;
                             }
@@ -507,13 +456,19 @@
                                 break;
                             }
                         }
-
-                        if (!placed) {
-                            structuredSlots.push([code]);
-                        }
+                        if (!placed) structuredSlots.push([code]);
                     });
 
                     finalSlots = structuredSlots;
+                    
+                    // Invert index registers back for reporting cross-checks
+                    paperToSlotIndexMap.clear();
+                    finalSlots.forEach((dayCodes, dayIdx) => {
+                        dayCodes.forEach(code => {
+                            paperToSlotIndexMap.set(code, `Day ${dayIdx + 1}`);
+                        });
+                    });
+
                     renderTimetableOutput(finalSlots, enrollmentMap, rules, matchesTwoTierRule);
 
                 } catch (e) {
@@ -534,7 +489,6 @@
                 card.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
                 
                 let tagHtml = `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${dayPapers.length} Papers Included</span>`;
-                
                 const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal-group' && matchesTwoTierRule(c, r)));
                 const isPool = dayPapers.some(c => rules.some(r => r.type === 'pool' && matchesTwoTierRule(c, r)));
                 
@@ -576,10 +530,10 @@
             outputSection.scrollIntoView({ behavior: 'smooth' });
         }
 
+        // REPORT 1: Export Master Plan Overview Sheet
         exportBtn.addEventListener('click', () => {
             if (!finalSlots.length) return;
             const outputRows = [];
-
             finalSlots.forEach((codes, dayIdx) => {
                 codes.forEach(code => {
                     outputRows.push({
@@ -589,11 +543,65 @@
                     });
                 });
             });
-
             const worksheet = XLSX.utils.json_to_sheet(outputRows);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Master Timetable Plan");
-            XLSX.writeFile(workbook, "Rule_Compliant_University_Timetable.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Master Plan");
+            XLSX.writeFile(workbook, "Master_Exam_Timetable_Plan.xlsx");
+        });
+
+        // REPORT 2: Advanced Student-Wise Registration & Schedule Report
+        exportStudentBtn.addEventListener('click', () => {
+            if (!masterDataset.length || !paperToSlotIndexMap.size) {
+                alert("Please build the allocation table matrix before requesting analytical report exports.");
+                return;
+            }
+
+            showLoading(true, "Compiling student-wise registry reports...");
+
+            setTimeout(() => {
+                try {
+                    const studentWiseRows = [];
+
+                    for (let i = 0; i < masterDataset.length; i++) {
+                        const record = masterDataset[i];
+                        const rawRow = record.raw; // Pull from complete original spreadsheet row dictionary
+                        
+                        const paperCode = record.code;
+                        const assignedSlot = paperToSlotIndexMap.get(paperCode) || "Unscheduled Exception";
+
+                        // Map requested fields using fallbacks for slight naming variations
+                        studentWiseRows.push({
+                            "Programme Name": rawRow["Programme Name"] || rawRow["ProgramFullName"] || "",
+                            "Pattern": rawRow["Pattern"] || "",
+                            "ProgramPart": rawRow["ProgramPart"] || "",
+                            "ProgramTerm": rawRow["ProgramTerm"] || "",
+                            "PRN": record.prn,
+                            "FullName": rawRow["FullName"] || "",
+                            "MobileNumber": rawRow["MobileNumber"] || "",
+                            "EmailID": rawRow["EmailID"] || "",
+                            "CollegeOrStudyCenterCode": rawRow["CollegeOrStudyCenterCode"] || rawRow["CenterCode"] || "",
+                            "CollegeOrStudyCenterName": rawRow["CollegeOrStudyCenterName"] || rawRow["CenterName"] || "",
+                            "PaperCode": paperCode,
+                            "PaperName": record.name,
+                            "SeatNumber": rawRow["SeatNumber"] || "",
+                            "VenueCode": rawRow["VenueCode"] || "",
+                            "VenueName": rawRow["VenueName"] || "",
+                            "Assigned Slot Index": assignedSlot
+                        });
+                    }
+
+                    const worksheet = XLSX.utils.json_to_sheet(studentWiseRows);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Student Registry Matrix");
+                    
+                    XLSX.writeFile(workbook, "Student_Wise_Exam_Timetable_Report.xlsx");
+                } catch (err) {
+                    console.error(err);
+                    alert("Error constructing student report workbook: " + err.message);
+                } finally {
+                    showLoading(false);
+                }
+            }, 50);
         });
     </script>
 </body>
