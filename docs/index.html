@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Universal File Acceptance Dashboard</title>
+    <title>University Timetable Scheduler - Auto-Salvage Wrapper Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -67,14 +67,14 @@
                     <span>📁</span> Step 1: Drop & Import Any Dataset File Format
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Drop any data file format here (ZIP, Excel, CSV, text strings). The universal engine parses raw binary arrays automatically without throwing compression version errors.
+                    Drop any data file format here (ZIP, Excel, CSV). The auto-salvage engine automatically forces raw row parsing if standard decompression breaks down.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
                     <input type="file" id="fileInput" class="hidden" multiple>
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
-                        <p class="text-base font-medium text-gray-700">Drop your files here or <span class="text-indigo-600 underline">browse files</span></p>
+                        <p class="text-base font-medium text-gray-700">Drop files here or <span class="text-indigo-600 underline">browse files</span></p>
                         <p class="text-xs text-gray-400">Accepts any file encoding pattern natively</p>
                     </div>
                 </div>
@@ -170,7 +170,7 @@
 
     <script>
         // ==========================================
-        // 100% HARDCODED RELATIONAL EMAIL MAP REGISTER
+        // 100% HARDCODED RELATIONAL EMAIL MAP REGISTER (FROM EXCEL)
         // ==========================================
         let collegeDirectoryDataset = [
             { "code": "GB", "name": "Government Brennen College, Thalassery, Kannur", "email": "principal_gbc@kannuruniv.ac.in" },
@@ -197,7 +197,7 @@
             { "code": "MW", "name": "MSS College of Arts & Science College,Tharuvana, Wayanad", "email": "principal_mss@kannuruniv.ac.in" },
             { "code": "NL", "name": "Nalanda College of Arts and Science, Perla, Kasargod, Kasargod", "email": "principal_vvsn@kannuruniv.ac.in" },
             { "code": "PL", "name": "Pilathara Co-op Arts and Science College, Kannur", "email": "principal_pilatharacasc@kannuruniv.ac.in" },
-            { "code": "PP", "name": "Payyannur College, Payyannur, Kannur", "email": "principal_pc\n@kannuruniv.ac.in" },
+            { "code": "PP", "name": "Payyannur College, Payyannur, Kannur", "email": "principal_pc@kannuruniv.ac.in" },
             { "code": "SA", "name": "Sa-A-Diya Arts and Science College, Koliyadukkam, Kasargod", "email": "principal_sasck@kannuruniv.ac.in" },
             { "code": "SB", "name": "St. Mary's College, Bela, Kasargod", "email": "principal_smcb@kannuruniv.ac.in" },
             { "code": "SE", "name": "S.E.S College, Sreekandapuram, Kannur", "email": "principal_ses@kannuruniv.ac.in" },
@@ -387,10 +387,9 @@
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 try {
-                    // UNIVERSAL FALLBACK ENGINE: Intercept and process any file safely
                     await parseFileContentUniversally(file);
                 } catch (err) {
-                    console.warn(`File block skip trace for: ${file.name}. Attempting text fallbacks...`, err);
+                    console.warn(`File block extraction trace for: ${file.name}. Executing auto-salvage...`, err);
                     await parseFileAsTextFallback(file);
                 }
             }
@@ -412,7 +411,6 @@
                             for (const filename of Object.keys(unzipped.files)) {
                                 if (!unzipped.files[filename].dir) {
                                     const blob = await unzipped.files[filename].async("blob");
-                                    // Extract components inside compressed files recursively
                                     await extractSpreadsheetRows(blob);
                                 }
                             }
@@ -431,14 +429,15 @@
             });
         }
 
-        // Tier 2 Fallback: If workbook arrays fail (unsupported compression), read directly as standard CSV text vectors
+        // ADVANCED AUTO-SALVAGE BYPASS ENGINE
+        // If JSZip reports zip exceptions, this instantly treats the input raw byte stream directly as table records
         function parseFileAsTextFallback(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
                         const textContent = e.target.result;
-                        // Use sheet parser engine to pull CSV rows directly
+                        // Use sheet parser engine to pull string rows directly, bypassing zip blockages
                         const workbook = XLSX.read(textContent, { type: 'string' });
                         workbook.SheetNames.forEach(name => {
                             const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: "" });
@@ -577,6 +576,7 @@
             const checklistContainer = card.querySelector('.subgroups-checklist-container');
             const typeSelector = card.querySelector('.rule-type-selector');
 
+            // Checklist Synchronisation Trigger
             function updateSubgroupChecklist(selectedMain, currentVals = []) {
                 if (!selectedMain || !hierarchicalMap.has(selectedMain)) {
                     checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">Select an available Main Group first...</p>`;
