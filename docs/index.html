@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Auto-Salvage Wrapper Engine</title>
+    <title>University Timetable Scheduler - Restored Core Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,7 +14,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Universal file wrapper processing, calendar date mapping, and pre-baked college queries.</p>
+                <p class="text-slate-400 mt-1">Stable core compression processing with built-in college queries and calendar dating.</p>
             </div>
             <div class="flex items-center gap-3">
                 <button id="toggleAdminBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold py-2 px-4 rounded-lg transition-all shadow-sm">
@@ -64,18 +64,18 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-2">
                 <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                    <span>📁</span> Step 1: Drop & Import Any Dataset File Format
+                    <span>📁</span> Step 1: Drop & Import ZIP or Student Excel Dataset
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Drop any data file format here (ZIP, Excel, CSV). The auto-salvage engine automatically forces raw row parsing if standard decompression breaks down.
+                    Import your master dataset compressed folder (.zip) or workbook (.xlsx) directly using the restored file reader engine.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
-                    <input type="file" id="fileInput" class="hidden" multiple>
+                    <input type="file" id="fileInput" class="hidden" accept=".zip,.xlsx,.xls">
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
-                        <p class="text-base font-medium text-gray-700">Drop files here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Accepts any file encoding pattern natively</p>
+                        <p class="text-base font-medium text-gray-700">Drop ZIP or student dataset here or <span class="text-indigo-600 underline">browse files</span></p>
+                        <p class="text-xs text-gray-400">Processes and consolidates structures safely in the browser browser</p>
                     </div>
                 </div>
                 
@@ -170,7 +170,7 @@
 
     <script>
         // ==========================================
-        // 100% HARDCODED RELATIONAL EMAIL MAP REGISTER (FROM EXCEL)
+        // HARDCODED UNIVERSITY COLLEGE email ROSTER DIRECTORY
         // ==========================================
         let collegeDirectoryDataset = [
             { "code": "GB", "name": "Government Brennen College, Thalassery, Kannur", "email": "principal_gbc@kannuruniv.ac.in" },
@@ -362,94 +362,58 @@
             });
         });
 
-        // Standard Application file drops handlers
+        // ==========================================
+        // RESTORED STABLE FILE LOADER FROM ORIGINAL CODE
+        // ==========================================
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('border-slate-800', 'bg-slate-50');
-            if (e.dataTransfer.files.length) handleIncomingFilesList(e.dataTransfer.files);
+            if (e.dataTransfer.files.length) handleIncomingFile(e.dataTransfer.files[0]);
         });
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) handleIncomingFilesList(e.target.files);
+            if (e.target.files.length) handleIncomingFile(e.target.files[0]);
         });
 
-        async function handleIncomingFilesList(files) {
-            showLoading(true, "Scanning data array inputs...");
+        async function handleIncomingFile(file) {
+            showLoading(true, "Scanning binary data packages...");
             masterDataset = [];
             uniquePrns.clear();
             uniquePapers.clear();
             hierarchicalMap.clear();
             paperToSlotIndexMap.clear();
+            generateBtn.disabled = true;
+            rulesContainer.innerHTML = "";
+            rulesPanel.classList.add('opacity-40', 'pointer-events-none');
+            dateMappingPanel.classList.add('hidden');
             outputSection.classList.add('hidden');
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                try {
-                    await parseFileContentUniversally(file);
-                } catch (err) {
-                    console.warn(`File block extraction trace for: ${file.name}. Executing auto-salvage...`, err);
-                    await parseFileAsTextFallback(file);
-                }
-            }
-            alignAndConsolidateData();
-        }
-
-        // Tier 1: Try reading file via standard buffer arrays or JSZip extraction streams
-        function parseFileContentUniversally(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        
-                        // Check if file behaves like a ZIP folder via magic header bytes validation markers
-                        if (data[0] === 0x50 && data[1] === 0x4B && data[2] === 0x03 && data[3] === 0x04) {
-                            const jszip = new JSZip();
-                            const unzipped = await jszip.loadAsync(file);
-                            for (const filename of Object.keys(unzipped.files)) {
-                                if (!unzipped.files[filename].dir) {
-                                    const blob = await unzipped.files[filename].async("blob");
-                                    await extractSpreadsheetRows(blob);
-                                }
-                            }
-                        } else {
-                            // Standard workbook array loading sequence pass
-                            const workbook = XLSX.read(data, { type: 'array' });
-                            workbook.SheetNames.forEach(name => {
-                                const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: "" });
-                                masterDataset = masterDataset.concat(sheetRows);
-                            });
+            
+            try {
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (extension === 'zip') {
+                    const jszip = new JSZip();
+                    const unzipped = await jszip.loadAsync(file);
+                    for (const filename of Object.keys(unzipped.files)) {
+                        if (!unzipped.files[filename].dir && (filename.endsWith('.xlsx') || filename.endsWith('.xls') || filename.endsWith('.csv'))) {
+                            const blob = await unzipped.files[filename].async("blob");
+                            await extractSpreadsheetRows(blob);
                         }
-                        resolve();
-                    } catch (ex) { reject(ex); }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        // ADVANCED AUTO-SALVAGE BYPASS ENGINE
-        // If JSZip reports zip exceptions, this instantly treats the input raw byte stream directly as table records
-        function parseFileAsTextFallback(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const textContent = e.target.result;
-                        // Use sheet parser engine to pull string rows directly, bypassing zip blockages
-                        const workbook = XLSX.read(textContent, { type: 'string' });
-                        workbook.SheetNames.forEach(name => {
-                            const sheetRows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: "" });
-                            masterDataset = masterDataset.concat(sheetRows);
-                        });
-                    } catch (err) {
-                        console.error("Critical parsing fallback exception error: ", err);
                     }
-                    resolve();
-                };
-                reader.readAsText(file);
-            });
+                } else if (extension === 'xlsx' || extension === 'xls' || extension === 'csv') {
+                    await extractSpreadsheetRows(file);
+                } else {
+                    alert("Format error. Please feed the generator a valid .zip folder or Excel file.");
+                    showLoading(false);
+                    return;
+                }
+                alignAndConsolidateData();
+            } catch (err) {
+                console.error(err);
+                alert("Processing Exception: " + err.message);
+                showLoading(false);
+            }
         }
 
         function extractSpreadsheetRows(fileBlob) {
@@ -471,12 +435,6 @@
         }
 
         function alignAndConsolidateData() {
-            if (masterDataset.length === 0) {
-                showLoading(false);
-                alert("No valid data records discovered inside the uploaded files. Please verify that your sheet contains columns titled 'PRN', 'PaperCode', and 'PaperName'.");
-                return;
-            }
-
             showLoading(true, "Deduplicating entries and capturing valid parent groups...");
             const filteringMap = new Set();
             const consolidated = [];
@@ -491,6 +449,7 @@
 
                 if (!prn || !code) continue;
 
+                // Strip trailing formatting artifacts/dots
                 code = code.replace(/[.,\s_\-]+$/, ""); 
 
                 const trackingKey = `${prn}_${code}`;
@@ -500,7 +459,7 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Two-Tier Indexing Pass
+                    // Strict Two-Tier Regex Sorter
                     strictValidMainGroups.forEach(stemKey => {
                         const stemIndex = code.indexOf(stemKey);
                         if (stemIndex !== -1) {
@@ -576,7 +535,6 @@
             const checklistContainer = card.querySelector('.subgroups-checklist-container');
             const typeSelector = card.querySelector('.rule-type-selector');
 
-            // Checklist Synchronisation Trigger
             function updateSubgroupChecklist(selectedMain, currentVals = []) {
                 if (!selectedMain || !hierarchicalMap.has(selectedMain)) {
                     checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">Select an available Main Group first...</p>`;
