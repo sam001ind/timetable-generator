@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Complete Operational Matrix Suite</title>
+    <title>University Timetable Scheduler - Sorted Operational Suite</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,7 +14,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Isolate structural blocks, map calendar execution dates, and generate consolidated venue logs.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks, map calendar execution dates, and generate sorted venue logs.</p>
             </div>
             <div class="flex items-center gap-3">
                 <button id="toggleAdminBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold py-2 px-4 rounded-lg transition-all shadow-sm">
@@ -160,7 +160,7 @@
                     <button id="exportStudentBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3.5 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
                         <span>📊</span> Download Student-Wise Report
                     </button>
-                    <button id="exportVenueDispatchBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3.5 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2" title="Generates chronological checklist consolidated by date and campus location">
+                    <button id="exportVenueDispatchBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3.5 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2" title="Generates chronological checklist consolidated by date, center location, and course code">
                         <span>✉️</span> Download Venue Dispatch Report
                     </button>
                 </div>
@@ -173,7 +173,7 @@
 
     <script>
         // ==========================================
-        // 100% HARDCODED RELATIONAL EMAIL MAP REGISTER (FROM EXCEL)
+        // HARDCODED UNIVERSITY COLLEGE EMAIL ROSTER DIRECTORY
         // ==========================================
         let collegeDirectoryDataset = [
             { "code": "GB", "name": "Government Brennen College, Thalassery, Kannur", "email": "principal_gbc@kannuruniv.ac.in" },
@@ -227,7 +227,7 @@
             { "code": "VM", "name": "Vidyamandir Arts & Science College, Payyannur, Kannur", "email": "principal_vidyamandirascp@kannuruniv.ac.in" },
             { "code": "WA", "name": "Wings Arts & Science College, Padanna, Kasaragod", "email": "principal_wingsascp@kannuruniv.ac.in" },
             { "code": "LI", "name": "Lourde Institute of Science and Technology, Taliparamba", "email": "principal_listtprb@kannuruniv.ac.in" },
-            { "code": "SK", "name": "Sunrise College of Advanced Studies, Kuttur, Mathamangalam, Kannur", "email": "principal_sunrisekuttur@kuttur" },
+            { "code": "SK", "name": "Sunrise College of Advanced Studies, Kuttur, Mathamangalam, Kannur", "email": "principal_sunrisekuttur@kannuruniv.ac.in" },
             { "code": "IH", "name": "College for Costume & Fashion Designing, under IIHT-Kannur , kannur", "email": "principal_iiht@kannuruniv.ac.in" },
             { "code": "GM", "name": "Govt College, Mananthavady, Wayanad", "email": "principal_gcm@kannuruniv.ac.in" },
             { "code": "MV", "name": "MVR Institute of Life Science & Research Studies, Kannur", "email": "principal_mvrinstitute@kannuruniv.ac.in" },
@@ -366,7 +366,7 @@
             });
         });
 
-        // Restored original active Core engine file linkers
+        // Stable File Linkers Core Framework Engine
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-slate-800', 'bg-slate-50'); });
@@ -451,6 +451,7 @@
 
                 if (!prn || !code) continue;
 
+                // Strip trailing formatting artifacts/dots
                 code = code.replace(/[.,\s_\-]+$/, ""); 
 
                 const trackingKey = `${prn}_${code}`;
@@ -460,7 +461,7 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Two-Tier Indexing Pass
+                    // Strict Two-Tier Regex Sorter Pass
                     strictValidMainGroups.forEach(stemKey => {
                         const stemIndex = code.indexOf(stemKey);
                         if (stemIndex !== -1) {
@@ -667,7 +668,7 @@
                         }
                     });
 
-                    // PASS 3: CORE DOMAIN MAJOR PAPERS
+                    // PASS 3: CORE MAJOR DOMAIN PAPERS
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
                     remainingPapers.forEach(code => {
                         const currentStudents = enrollmentMap.get(code);
@@ -791,7 +792,7 @@
             XLSX.writeFile(workbook, "Master_Exam_Timetable_Plan.xlsx");
         });
 
-        // REPORT 2 EXPORT: STUDENT-WISE RECODR REGISTRY 
+        // REPORT 2 EXPORT: STUDENT-WISE RECORD REGISTRY
         exportStudentBtn.addEventListener('click', () => {
             if (!masterDataset.length || !paperToSlotIndexMap.size) return;
             showLoading(true, "Compiling multi-field personal registry reports...");
@@ -844,16 +845,15 @@
             }, 50);
         });
 
-        // ========================================================
-        // NEW REPORT 3 EXPORT: CONSOLIDATED CAMPUS VENUE DISPATCH 
-        // ========================================================
+        // =====================================================================
+        // REPORT 3 EXPORT: CONSOLIDATED CAMPUS VENUE DISPATCH (STABLE CHRONO SORT)
+        // =====================================================================
         exportVenueDispatchBtn.addEventListener('click', () => {
             if (!masterDataset.length || !paperToSlotIndexMap.size) return;
-            showLoading(true, "Compiling multi-field consolidated venue logs...");
+            showLoading(true, "Compiling multi-field sorted venue logs...");
 
             setTimeout(() => {
                 try {
-                    // Aggregator grouping structure tracking set maps: "Date_VenueCode_PaperCode"
                     const uniquelyIdentifiedGroupings = new Set();
                     const venueDispatchRows = [];
 
@@ -862,21 +862,21 @@
                         const rawRow = record.raw;
                         const paperCode = record.code;
 
-                        // Resolve chronological parameters (fallback to Day slot syntax if blank)
                         const assignedSlotString = paperToSlotIndexMap.get(paperCode) || "Day 0";
-                        const numericDayKey = assignedSlotString.replace("Day ", "").trim();
+                        const numericDayKey = parseInt(assignedSlotString.replace("Day ", "").trim()) || 0;
+                        
+                        // If a formal date was picked, substitute slot text entirely as requested
                         const examDateValue = dayDateMappingRegister[numericDayKey] || assignedSlotString;
 
                         const venueCodeKey = rawRow["VenueCode"] ? String(rawRow["VenueCode"]).trim() : "";
                         const venueNameValue = rawRow["VenueName"] ? String(rawRow["VenueName"]).trim() : "";
 
-                        // Structural unique token pass matching to avoid multi-row duplicate student counts
-                        const validationToken = `${examDateValue}_${venueCodeKey}_${paperCode}`;
+                        // Unique validation token tracking to prevent layout redundancy loops
+                        const validationToken = `${numericDayKey}_${venueCodeKey}_${paperCode}`;
 
                         if (!uniquelyIdentifiedGroupings.has(validationToken) && venueCodeKey !== "") {
                             uniquelyIdentifiedGroupings.add(validationToken);
 
-                            // Execute direct search in built-in email index
                             const directoryMatch = collegeDirectoryDataset.find(c => c.code === venueCodeKey);
                             const matchedCollegeEmail = directoryMatch ? directoryMatch.email : "Not Provided in Directory";
 
@@ -886,19 +886,37 @@
                                 "Venue Name": venueNameValue,
                                 "Course Code": paperCode,
                                 "Course Name": record.name,
-                                "Email ID": matchedCollegeEmail
+                                "Email ID": matchedCollegeEmail,
+                                "_dayIntKey": numericDayKey // Hidden key used to force stable chronology sort
                             });
                         }
                     }
 
-                    // Chronological Sort sequence grouping by dates first, then by alphabetical Venue Codes
+                    // REINFORCED STRICT THREE-TIER SORT MATRIX ENGINE RUN PASS
+                    // 1. Sort Priority: Underlying Timeline Day (Chronological Integer)
+                    // 2. Sort Priority: Venue Code (Alphabetical String)
+                    // 3. Sort Priority: Course Code (Alphabetical String)
                     venueDispatchRows.sort((a, b) => {
-                        const dateCompare = a["Exam Date"].localeCompare(b["Exam Date"]);
-                        if (dateCompare !== 0) return dateCompare;
-                        return a["Venue Code"].localeCompare(b["Venue Code"]);
+                        if (a._dayIntKey !== b._dayIntKey) {
+                            return a._dayIntKey - b._dayIntKey;
+                        }
+                        const venueCompare = a["Venue Code"].localeCompare(b["Venue Code"]);
+                        if (venueCompare !== 0) return venueCompare;
+                        
+                        return a["Course Code"].localeCompare(b["Course Code"]);
                     });
 
-                    const worksheet = XLSX.utils.json_to_sheet(venueDispatchRows);
+                    // Strip out internal numerical structural sort variables before streaming to client
+                    const polishedCleanExcelRows = venueDispatchRows.map(row => ({
+                        "Exam Date": row["Exam Date"],
+                        "Venue Code": row["Venue Code"],
+                        "Venue Name": row["Venue Name"],
+                        "Course Code": row["Course Code"],
+                        "Course Name": row["Course Name"],
+                        "Email ID": row["Email ID"]
+                    }));
+
+                    const worksheet = XLSX.utils.json_to_sheet(polishedCleanExcelRows);
                     const workbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(workbook, worksheet, "Venue Dispatch Matrix");
                     XLSX.writeFile(workbook, "Venue_Dispatch_Logs_Report.xlsx");
