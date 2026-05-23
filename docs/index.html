@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Clean Scanned Grouping</title>
+    <title>University Timetable Scheduler - Zero Preset Architecture</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Isolate structural blocks using dynamic groups derived purely from your file records.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks using custom rules built completely from scratch.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Clean Scanned Menus Active:</strong> The "Main Group" dropdown will exclusively populate with code keys discovered within your dataset.
+                <strong>Zero Preset Engine Active:</strong> No default configurations will preload. Main Group selections dynamically list only the keys discovered inside your dataset.
             </div>
         </div>
     </header>
@@ -30,7 +30,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your dataset. The application will scan and map child extensions, populating the rule criteria with only the groups that exist inside the document.
+                    Import your dataset. The application will scan your files and populate the classification menus with only the parent groups found within the document records.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -90,7 +90,7 @@
                 </button>
             </div>
             <p class="text-sm text-gray-500 mb-4">
-                Pick a main group block, then check one or more subgroups from the dynamic multi-select box. Use **Select All** to easily target every subgroup variant in that block simultaneously.
+                Click **Add New Custom Rule** to insert a clean configuration block. Select your discovered Main Group and pick which subgroup patterns should bundle together into isolated slots.
             </p>
             
             <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -272,7 +272,8 @@
             if (masterDataset.length > 0) {
                 generateBtn.disabled = false;
                 rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
-                buildDefaultPresetRules();
+                // CLEAN UP: All default rules generation calls removed here to guarantee a fresh slate
+                rulesContainer.innerHTML = ""; 
             }
         }
 
@@ -283,7 +284,7 @@
             card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
             card.setAttribute('data-type', defaultType);
 
-            // Populate Dropdown 1: Main Categories (derived EXCLUSIVELY from hierarchicalMap keys)
+            // Populate Dropdown 1: Main Categories (derived EXCLUSIVELY from hierarchicalMap keys discovered inside files)
             let mainOptionsHtml = `<option value="">-- Select Main Group --</option>`;
             Array.from(hierarchicalMap.keys()).sort().forEach(mainKey => {
                 const selectedAttr = mainKey === defaultMain ? 'selected' : '';
@@ -398,24 +399,7 @@
             rulesContainer.appendChild(card);
         }
 
-        // Establish safe preset definitions if the parent keys match file imports
-        function buildDefaultPresetRules() {
-            rulesContainer.innerHTML = "";
-            
-            if (hierarchicalMap.has("AEC")) {
-                if (hierarchicalMap.get("AEC").has("ENG")) {
-                    createHierarchicalRuleCard('universal-group', 'AEC', ['ENG']);
-                }
-                createHierarchicalRuleCard('pool', 'AEC', ['ALL']);
-            }
-            if (hierarchicalMap.has("MDC")) {
-                createHierarchicalRuleCard('pool', 'MDC', ['ALL']);
-            }
-            if (hierarchicalMap.has("SEC")) {
-                createHierarchicalRuleCard('pool', 'SEC', ['ALL']);
-            }
-        }
-
+        // Programmatic rule addition trigger bound directly to button click actions
         addRuleBtn.addEventListener('click', () => createHierarchicalRuleCard('pool', '', []));
 
         function showLoading(show, txt = "") {
