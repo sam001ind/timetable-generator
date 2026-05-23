@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Sanatized Flexible Isolation Engine</title>
+    <title>University Timetable Scheduler - Optional Date Substitution Matrix</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Robust pattern matching accommodating flexible version codes and trailing punctuation filters.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks, map optional execution dates, and output detailed data plans.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Data Sanatization Guard Active:</strong> Strips trailing periods, spaces, and formatting artifacts (e.g., <code class="text-amber-400">KU2AECENG106.</code> becomes <code class="text-emerald-400">KU2AECENG106</code>) automatically.
+                <strong>Optional Calendar Matrix:</strong> Date fields are optional. If blank, reports automatically fall back to standard day slot outputs (e.g., <code class="text-amber-400">Day 1</code>).
             </div>
         </div>
     </header>
@@ -30,7 +30,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your dataset. The application will scrub the rows, clean formatting variations, and extract structured two-tier rule options dynamically.
+                    Import your dataset. The application will scan your files and populate the classification menus with only the parent groups found within the document records.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -97,6 +97,19 @@
                 </div>
         </div>
 
+        <div id="dateMappingPanel" class="hidden bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8 transition-all duration-300">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <span>📅</span> Step 3: Map Calendar Dates <span class="text-xs font-normal text-gray-400 uppercase tracking-wide bg-gray-100 px-2 py-0.5 rounded border border-gray-200 ml-1">Optional Substitution</span>
+                </h2>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">
+                If you wish to replace Day references with formal calendar dates, assign inputs below. If left unselected or blank, reports fall back automatically to standard Day labels.
+            </p>
+            <div id="datePickersGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                </div>
+        </div>
+
         <div id="outputSection" class="hidden space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl shadow-xs border border-gray-200">
                 <div>
@@ -125,7 +138,9 @@
         let uniquePapers = new Map(); // PaperCode -> PaperName
         let hierarchicalMap = new Map(); // MainGroup -> Set of Subgroups (populated dynamically)
         let finalSlots = [];
+        
         let paperToSlotIndexMap = new Map(); // PaperCode -> Day Index string for report tracking
+        let dayDateMappingRegister = {};     // Day Index Integer -> Formatted Date String
 
         // DOM Handles
         const dropZone = document.getElementById('dropZone');
@@ -135,6 +150,8 @@
         const generateBtn = document.getElementById('generateBtn');
         const rulesPanel = document.getElementById('rulesPanel');
         const rulesContainer = document.getElementById('rulesContainer');
+        const dateMappingPanel = document.getElementById('dateMappingPanel');
+        const datePickersGrid = document.getElementById('datePickersGrid');
         const outputSection = document.getElementById('outputSection');
         const timetableGrid = document.getElementById('timetableGrid');
         const exportBtn = document.getElementById('exportBtn');
@@ -167,9 +184,11 @@
             uniquePapers.clear();
             hierarchicalMap.clear();
             paperToSlotIndexMap.clear();
+            dayDateMappingRegister = {};
             generateBtn.disabled = true;
             rulesContainer.innerHTML = "";
             rulesPanel.classList.add('opacity-40', 'pointer-events-none');
+            dateMappingPanel.classList.add('hidden');
             outputSection.classList.add('hidden');
             
             try {
@@ -186,7 +205,7 @@
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     await extractSpreadsheetRows(file);
                 } else {
-                    alert("Format error. Please feed the generator a valid .xlsx workbook or a compressed .zip folder.");
+                    alert("Format error. Please upload a valid standard .xlsx workbook or a compressed .zip folder.");
                     showLoading(false);
                     return;
                 }
@@ -232,8 +251,7 @@
 
                 if (!prn || !code) continue;
 
-                // CRITICAL ADDITION: Sanitization filter logic to scrub text geometry
-                // Automatically removes dots, spaces, commas, or extra formatting anomalies from code tails
+                // Sanitization filter logic to scrub trailing characters or terminal dots
                 code = code.replace(/[.,\s_\-]+$/, ""); 
 
                 const trackingKey = `${prn}_${code}`;
@@ -243,14 +261,13 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Indexing Pass
+                    // Indexing Pass using flexible positional searches
                     strictValidMainGroups.forEach(stemKey => {
                         const stemIndex = code.indexOf(stemKey);
                         if (stemIndex !== -1) {
                             if (!hierarchicalMap.has(stemKey)) {
                                 hierarchicalMap.set(stemKey, new Set());
                             }
-
                             const remainingPart = code.substring(stemIndex + stemKey.length);
                             const alphaSubMatch = remainingPart.match(/[A-Z]+/); 
                             
@@ -275,7 +292,6 @@
             }
         }
 
-        // Two-Tier Dropdown Card UI Builder
         function createHierarchicalRuleCard(defaultType, defaultMain = "", defaultSubVals = []) {
             const card = document.createElement('div');
             const bgClass = defaultType === 'universal-group' ? 'border-amber-200 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/40';
@@ -411,7 +427,7 @@
 
         // Allocation Engine Loop Pass
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Analyzing verified checklist layouts...");
+            showLoading(true, "Analyzing checked multi-select rules and generating timetable bins...");
             
             setTimeout(() => {
                 try {
@@ -525,6 +541,7 @@
                         });
                     });
 
+                    buildCalendarMappingInputs(finalSlots.length);
                     renderTimetableOutput(finalSlots, enrollmentMap, rules, matchesTwoTierRule);
 
                 } catch (e) {
@@ -536,11 +553,55 @@
             }, 50);
         });
 
+        // Build Calendar Inputs Panel
+        function buildCalendarMappingInputs(totalDays) {
+            datePickersGrid.innerHTML = "";
+            dayDateMappingRegister = {};
+
+            for (let i = 1; i <= totalDays; i++) {
+                dayDateMappingRegister[i] = ""; 
+
+                const container = document.createElement('div');
+                container.className = "p-3 rounded-xl border border-gray-200 bg-gray-50 flex flex-col justify-between";
+                container.innerHTML = `
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1 font-mono">Day ${i} Slot Allocation</label>
+                    <input type="date" class="day-calendar-input w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" data-day-index="${i}">
+                `;
+
+                const dateInput = container.querySelector('.day-calendar-input');
+                dateInput.addEventListener('change', (e) => {
+                    const idx = e.target.getAttribute('data-day-index');
+                    const rawVal = e.target.value; 
+                    
+                    if(rawVal) {
+                        const parts = rawVal.split('-');
+                        const formattedDisplayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        dayDateMappingRegister[idx] = formattedDisplayDate;
+                        
+                        const bannerTextNode = document.getElementById(`day-title-banner-${idx}`);
+                        if(bannerTextNode) {
+                            bannerTextNode.innerText = `Exam Matrix Day #${idx} — ${formattedDisplayDate}`;
+                        }
+                    } else {
+                        dayDateMappingRegister[idx] = "";
+                        const bannerTextNode = document.getElementById(`day-title-banner-${idx}`);
+                        if(bannerTextNode) {
+                            bannerTextNode.innerText = `Exam Matrix Day #${idx}`;
+                        }
+                    }
+                });
+
+                datePickersGrid.appendChild(container);
+            }
+            dateMappingPanel.classList.remove('hidden');
+        }
+
         function renderTimetableOutput(slots, enrollmentMap, rules, matchesTwoTierRule) {
             timetableGrid.innerHTML = "";
             slotSummaryText.innerText = `Distributed ${uniquePapers.size} course profiles safely across ${slots.length} optimized timeline days.`;
 
             slots.forEach((dayPapers, index) => {
+                const dayIndex = index + 1;
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
                 
@@ -557,7 +618,7 @@
                 const header = document.createElement('div');
                 header.className = "bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center";
                 header.innerHTML = `
-                    <span class="font-bold text-gray-700 text-sm uppercase">Exam Matrix Day #${index + 1}</span>
+                    <span id="day-title-banner-${dayIndex}" class="font-bold text-slate-700 text-sm uppercase">Exam Matrix Day #${dayIndex}</span>
                     ${tagHtml}
                 `;
                 card.appendChild(header);
@@ -586,33 +647,40 @@
             outputSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // REPORT 1 EXPORT
+        // REPORT 1 EXPORT: Course Schedule Master Plan Sheets Including Date Columns (Optional Fallbacks Enforced)
         exportBtn.addEventListener('click', () => {
             if (!finalSlots.length) return;
             const outputRows = [];
+            
             finalSlots.forEach((codes, dayIdx) => {
+                const dayNum = dayIdx + 1;
+                // Safe Fallback check: prints out input string OR empty slot if skipped entirely by the user
+                const mappedCalendarDate = dayDateMappingRegister[dayNum] || "";
+
                 codes.forEach(code => {
                     outputRows.push({
-                        "Scheduled Day": `Day ${dayIdx + 1}`,
+                        "Scheduled Day": `Day ${dayNum}`,
+                        "Assigned Date": mappedCalendarDate, 
                         "Paper Code": code,
                         "Paper Name": uniquePapers.get(code)
                     });
                 });
             });
+
             const worksheet = XLSX.utils.json_to_sheet(outputRows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Master Plan");
             XLSX.writeFile(workbook, "Master_Exam_Timetable_Plan.xlsx");
         });
 
-        // REPORT 2 EXPORT
+        // REPORT 2 EXPORT: Individual Student Registry Sheets Including Date Columns (Optional Fallbacks Enforced)
         exportStudentBtn.addEventListener('click', () => {
             if (!masterDataset.length || !paperToSlotIndexMap.size) {
                 alert("Please run the generation scheduler before attempting data matrix reporting outputs.");
                 return;
             }
 
-            showLoading(true, "Compiling multi-field personal registry reports...");
+            showLoading(true, "Compiling student-wise registry reports...");
 
             setTimeout(() => {
                 try {
@@ -623,7 +691,11 @@
                         const rawRow = record.raw; 
                         
                         const paperCode = record.code;
-                        const assignedSlot = paperToSlotIndexMap.get(paperCode) || "Unscheduled Exception";
+                        const assignedSlotString = paperToSlotIndexMap.get(paperCode) || "Day 0";
+                        
+                        const numericDayKey = assignedSlotString.replace("Day ", "").trim();
+                        // Safe Fallback check: maps date or leaves field row space empty if optional pass was skipped
+                        const mappedCalendarDate = dayDateMappingRegister[numericDayKey] || "";
 
                         studentWiseRows.push({
                             "Programme Name": rawRow["Programme Name"] || rawRow["ProgramFullName"] || "",
@@ -641,7 +713,8 @@
                             "SeatNumber": rawRow["SeatNumber"] || "",
                             "VenueCode": rawRow["VenueCode"] || "",
                             "VenueName": rawRow["VenueName"] || "",
-                            "Assigned Slot Index": assignedSlot
+                            "Assigned Slot Index": assignedSlotString,
+                            "Assigned Date": mappedCalendarDate 
                         });
                     }
 
