@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Zero Preset Architecture</title>
+    <title>University Timetable Scheduler - 100% Dynamic Group Extraction</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Isolate structural blocks using custom rules built completely from scratch.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks using dynamic groups derived purely from your file records.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Zero Preset Engine Active:</strong> No default configurations will preload. Main Group selections dynamically list only the keys discovered inside your dataset.
+                <strong>Pure Data Discovery Active:</strong> Hardcoded prefix filters are completely removed. The Main Group options are generated 100% from your file.
             </div>
         </div>
     </header>
@@ -90,7 +90,7 @@
                 </button>
             </div>
             <p class="text-sm text-gray-500 mb-4">
-                Click **Add New Custom Rule** to insert a clean configuration block. Select your discovered Main Group and pick which subgroup patterns should bundle together into isolated slots.
+                Click **Add New Custom Rule** to insert a configuration block. Select your discovered Main Group and pick which subgroup patterns should bundle together into isolated slots.
             </p>
             
             <div id="rulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -186,7 +186,7 @@
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     await extractSpreadsheetRows(file);
                 } else {
-                    alert("Format error. Please feed the generator an standard .xlsx workbook or a compressed .zip folder.");
+                    alert("Format error. Please feed the generator a valid .xlsx workbook or a compressed .zip folder.");
                     showLoading(false);
                     return;
                 }
@@ -221,9 +221,6 @@
             const filteringMap = new Set();
             const consolidated = [];
 
-            // Master list of known academic prefix stems to scan for inside codes
-            const coreAcademicStems = ["AEC", "MDC", "SEC", "VAC", "DSC"];
-
             for (let i = 0; i < masterDataset.length; i++) {
                 const r = masterDataset[i];
                 const prn = r["PRN"] ? String(r["PRN"]).trim() : "";
@@ -239,24 +236,26 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Two-Tier Dynamic Discovery Pass
+                    // 100% Dynamic Parsing Engine Pass
+                    // Looks at strings like KU2AECENG106 or KU2DSCHIS111 
+                    // Automatically splits them into Main Group and Subgroup purely based on text geometry
                     const alphaMatches = code.match(/[A-Z]+/g);
                     if (alphaMatches) {
                         alphaMatches.forEach(chunk => {
+                            // Skip short university prefixes like 'KU' (usually 2 letters)
                             if (chunk.length >= 3) {
-                                coreAcademicStems.forEach(stemKey => {
-                                    if (chunk.startsWith(stemKey)) {
-                                        // Only initialize map slots for parent groups that actually exist in the file
-                                        if (!hierarchicalMap.has(stemKey)) {
-                                            hierarchicalMap.set(stemKey, new Set());
-                                        }
+                                // The main group is always the first 3 tracking characters (e.g., 'AEC', 'MDC', 'DSC')
+                                const stemKey = chunk.substring(0, 3);
+                                
+                                if (!hierarchicalMap.has(stemKey)) {
+                                    hierarchicalMap.set(stemKey, new Set());
+                                }
 
-                                        const subGroupPart = chunk.substring(stemKey.length);
-                                        if (subGroupPart.length > 0) {
-                                            hierarchicalMap.get(stemKey).add(subGroupPart);
-                                        }
-                                    }
-                                });
+                                // The subgroup is whatever remains after the first 3 letters (e.g., 'ENG', 'HIS')
+                                const subGroupPart = chunk.substring(3);
+                                if (subGroupPart.length > 0) {
+                                    hierarchicalMap.get(stemKey).add(subGroupPart);
+                                }
                             }
                         });
                     }
@@ -272,19 +271,19 @@
             if (masterDataset.length > 0) {
                 generateBtn.disabled = false;
                 rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
-                // CLEAN UP: All default rules generation calls removed here to guarantee a fresh slate
+                // Clean configuration block: starts completely empty as requested
                 rulesContainer.innerHTML = ""; 
             }
         }
 
-        // Two-Tier Dynamic Dropdown Card UI Builder
+        // Two-Tier Dropdown Card UI Builder
         function createHierarchicalRuleCard(defaultType, defaultMain = "", defaultSubVals = []) {
             const card = document.createElement('div');
             const bgClass = defaultType === 'universal-group' ? 'border-amber-200 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/40';
             card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
             card.setAttribute('data-type', defaultType);
 
-            // Populate Dropdown 1: Main Categories (derived EXCLUSIVELY from hierarchicalMap keys discovered inside files)
+            // Populate Dropdown 1: Main Categories (derived EXCLUSIVELY from hierarchicalMap keys found inside files)
             let mainOptionsHtml = `<option value="">-- Select Main Group --</option>`;
             Array.from(hierarchicalMap.keys()).sort().forEach(mainKey => {
                 const selectedAttr = mainKey === defaultMain ? 'selected' : '';
