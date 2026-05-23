@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Restored Core Engine</title>
+    <title>University Timetable Scheduler - Complete Operational Matrix Suite</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,7 +14,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Stable core compression processing with built-in college queries and calendar dating.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks, map calendar execution dates, and generate consolidated venue logs.</p>
             </div>
             <div class="flex items-center gap-3">
                 <button id="toggleAdminBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold py-2 px-4 rounded-lg transition-all shadow-sm">
@@ -67,7 +67,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Student Excel Dataset
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your master dataset compressed folder (.zip) or workbook (.xlsx) directly using the restored file reader engine.
+                    Import your master dataset compressed folder (.zip) or workbook (.xlsx) directly using the restored stable file reader engine.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -75,7 +75,7 @@
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
                         <p class="text-base font-medium text-gray-700">Drop ZIP or student dataset here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Processes and consolidates structures safely in the browser browser</p>
+                        <p class="text-xs text-gray-400">Processes and consolidates structures safely in the browser</p>
                     </div>
                 </div>
                 
@@ -141,24 +141,27 @@
                 </h2>
             </div>
             <p class="text-sm text-gray-500 mb-4">
-                If you wish to replace Day references with formal calendar dates, assign inputs below. If left unselected or blank, reports fall back automatically to standard Day labels.
+                Assign formal calendar dates to each Day Slot. If left unselected or blank, downstream reports will cleanly fall back to printing standard Day indices (`Day 1`, `Day 2`).
             </p>
             <div id="datePickersGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 </div>
         </div>
 
         <div id="outputSection" class="hidden space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl shadow-xs border border-gray-200">
+            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white p-5 rounded-xl shadow-xs border border-gray-200">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">Rule-Aligned Allocation Matrices</h2>
                     <p id="slotSummaryText" class="text-sm text-gray-500 mt-0.5">Calculated optimized distribution bins.</p>
                 </div>
-                <div class="flex flex-wrap gap-3">
-                    <button id="exportBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
+                <div class="flex flex-wrap gap-2.5">
+                    <button id="exportBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-3.5 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
                         <span>🗓️</span> Export Master Plan
                     </button>
-                    <button id="exportStudentBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
+                    <button id="exportStudentBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3.5 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2">
                         <span>📊</span> Download Student-Wise Report
+                    </button>
+                    <button id="exportVenueDispatchBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3.5 rounded-lg shadow-xs transition-all text-sm flex items-center gap-2" title="Generates chronological checklist consolidated by date and campus location">
+                        <span>✉️</span> Download Venue Dispatch Report
                     </button>
                 </div>
             </div>
@@ -170,7 +173,7 @@
 
     <script>
         // ==========================================
-        // HARDCODED UNIVERSITY COLLEGE email ROSTER DIRECTORY
+        // 100% HARDCODED RELATIONAL EMAIL MAP REGISTER (FROM EXCEL)
         // ==========================================
         let collegeDirectoryDataset = [
             { "code": "GB", "name": "Government Brennen College, Thalassery, Kannur", "email": "principal_gbc@kannuruniv.ac.in" },
@@ -224,7 +227,7 @@
             { "code": "VM", "name": "Vidyamandir Arts & Science College, Payyannur, Kannur", "email": "principal_vidyamandirascp@kannuruniv.ac.in" },
             { "code": "WA", "name": "Wings Arts & Science College, Padanna, Kasaragod", "email": "principal_wingsascp@kannuruniv.ac.in" },
             { "code": "LI", "name": "Lourde Institute of Science and Technology, Taliparamba", "email": "principal_listtprb@kannuruniv.ac.in" },
-            { "code": "SK", "name": "Sunrise College of Advanced Studies, Kuttur, Mathamangalam, Kannur", "email": "principal_sunrisekuttur@kannuruniv.ac.in" },
+            { "code": "SK", "name": "Sunrise College of Advanced Studies, Kuttur, Mathamangalam, Kannur", "email": "principal_sunrisekuttur@kuttur" },
             { "code": "IH", "name": "College for Costume & Fashion Designing, under IIHT-Kannur , kannur", "email": "principal_iiht@kannuruniv.ac.in" },
             { "code": "GM", "name": "Govt College, Mananthavady, Wayanad", "email": "principal_gcm@kannuruniv.ac.in" },
             { "code": "MV", "name": "MVR Institute of Life Science & Research Studies, Kannur", "email": "principal_mvrinstitute@kannuruniv.ac.in" },
@@ -293,6 +296,7 @@
         const timetableGrid = document.getElementById('timetableGrid');
         const exportBtn = document.getElementById('exportBtn');
         const exportStudentBtn = document.getElementById('exportStudentBtn');
+        const exportVenueDispatchBtn = document.getElementById('exportVenueDispatchBtn');
         const addRuleBtn = document.getElementById('addRuleBtn');
 
         // Admin Management DOM Handles
@@ -362,9 +366,7 @@
             });
         });
 
-        // ==========================================
-        // RESTORED STABLE FILE LOADER FROM ORIGINAL CODE
-        // ==========================================
+        // Restored original active Core engine file linkers
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-slate-800', 'bg-slate-50'); });
@@ -449,7 +451,6 @@
 
                 if (!prn || !code) continue;
 
-                // Strip trailing formatting artifacts/dots
                 code = code.replace(/[.,\s_\-]+$/, ""); 
 
                 const trackingKey = `${prn}_${code}`;
@@ -459,7 +460,7 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Strict Two-Tier Regex Sorter
+                    // Two-Tier Indexing Pass
                     strictValidMainGroups.forEach(stemKey => {
                         const stemIndex = code.indexOf(stemKey);
                         if (stemIndex !== -1) {
@@ -769,7 +770,7 @@
             outputSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // MASTER EXPORT SHEET
+        // REPORT 1 EXPORT
         exportBtn.addEventListener('click', () => {
             if (!finalSlots.length) return;
             const outputRows = [];
@@ -790,7 +791,7 @@
             XLSX.writeFile(workbook, "Master_Exam_Timetable_Plan.xlsx");
         });
 
-        // REALTIONAL DATA JOIN STUDENT EXPORT
+        // REPORT 2 EXPORT: STUDENT-WISE RECODR REGISTRY 
         exportStudentBtn.addEventListener('click', () => {
             if (!masterDataset.length || !paperToSlotIndexMap.size) return;
             showLoading(true, "Compiling multi-field personal registry reports...");
@@ -805,7 +806,6 @@
                         const assignedSlotString = paperToSlotIndexMap.get(paperCode) || "Day 0";
                         const numericDayKey = assignedSlotString.replace("Day ", "").trim();
 
-                        // Query lookup match directly from the hardcoded memory array register
                         const venueCodeKey = rawRow["VenueCode"] ? String(rawRow["VenueCode"]).trim() : "";
                         const directoryMatch = collegeDirectoryDataset.find(c => c.code === venueCodeKey);
                         const matchedCollegeEmail = directoryMatch ? directoryMatch.email : "Not Provided in Directory";
@@ -838,6 +838,74 @@
                     XLSX.writeFile(workbook, "Student_Wise_Exam_Timetable_Report.xlsx");
                 } catch (err) {
                     console.error(err);
+                } finally {
+                    showLoading(false);
+                }
+            }, 50);
+        });
+
+        // ========================================================
+        // NEW REPORT 3 EXPORT: CONSOLIDATED CAMPUS VENUE DISPATCH 
+        // ========================================================
+        exportVenueDispatchBtn.addEventListener('click', () => {
+            if (!masterDataset.length || !paperToSlotIndexMap.size) return;
+            showLoading(true, "Compiling multi-field consolidated venue logs...");
+
+            setTimeout(() => {
+                try {
+                    // Aggregator grouping structure tracking set maps: "Date_VenueCode_PaperCode"
+                    const uniquelyIdentifiedGroupings = new Set();
+                    const venueDispatchRows = [];
+
+                    for (let i = 0; i < masterDataset.length; i++) {
+                        const record = masterDataset[i];
+                        const rawRow = record.raw;
+                        const paperCode = record.code;
+
+                        // Resolve chronological parameters (fallback to Day slot syntax if blank)
+                        const assignedSlotString = paperToSlotIndexMap.get(paperCode) || "Day 0";
+                        const numericDayKey = assignedSlotString.replace("Day ", "").trim();
+                        const examDateValue = dayDateMappingRegister[numericDayKey] || assignedSlotString;
+
+                        const venueCodeKey = rawRow["VenueCode"] ? String(rawRow["VenueCode"]).trim() : "";
+                        const venueNameValue = rawRow["VenueName"] ? String(rawRow["VenueName"]).trim() : "";
+
+                        // Structural unique token pass matching to avoid multi-row duplicate student counts
+                        const validationToken = `${examDateValue}_${venueCodeKey}_${paperCode}`;
+
+                        if (!uniquelyIdentifiedGroupings.has(validationToken) && venueCodeKey !== "") {
+                            uniquelyIdentifiedGroupings.add(validationToken);
+
+                            // Execute direct search in built-in email index
+                            const directoryMatch = collegeDirectoryDataset.find(c => c.code === venueCodeKey);
+                            const matchedCollegeEmail = directoryMatch ? directoryMatch.email : "Not Provided in Directory";
+
+                            venueDispatchRows.push({
+                                "Exam Date": examDateValue,
+                                "Venue Code": venueCodeKey,
+                                "Venue Name": venueNameValue,
+                                "Course Code": paperCode,
+                                "Course Name": record.name,
+                                "Email ID": matchedCollegeEmail
+                            });
+                        }
+                    }
+
+                    // Chronological Sort sequence grouping by dates first, then by alphabetical Venue Codes
+                    venueDispatchRows.sort((a, b) => {
+                        const dateCompare = a["Exam Date"].localeCompare(b["Exam Date"]);
+                        if (dateCompare !== 0) return dateCompare;
+                        return a["Venue Code"].localeCompare(b["Venue Code"]);
+                    });
+
+                    const worksheet = XLSX.utils.json_to_sheet(venueDispatchRows);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Venue Dispatch Matrix");
+                    XLSX.writeFile(workbook, "Venue_Dispatch_Logs_Report.xlsx");
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Error constructing venue log report: " + err.message);
                 } finally {
                     showLoading(false);
                 }
