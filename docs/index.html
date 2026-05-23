@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Advanced Multi-Select Isolation Engine</title>
+    <title>University Timetable Scheduler - Clean Scanned Grouping</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Multi-select rule checklist to bundle specific or all subgroups concurrently.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks using dynamic groups derived purely from your file records.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Multi-Select Capability Active:</strong> Use the checklist checkboxes to isolate individual items or use "Select All" to target an entire core component block.
+                <strong>Clean Scanned Menus Active:</strong> The "Main Group" dropdown will exclusively populate with code keys discovered within your dataset.
             </div>
         </div>
     </header>
@@ -30,7 +30,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your dataset. The application will break down code strings into structural components and index matching sub-branches.
+                    Import your dataset. The application will scan and map child extensions, populating the rule criteria with only the groups that exist inside the document.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -38,7 +38,7 @@
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
                         <p class="text-base font-medium text-gray-700">Drop ZIP or single Excel datasets here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Decompresses folders and aligns sheet rows entirely in your browser</p>
+                        <p class="text-xs text-gray-400">Decompresses folders and parses row content safely in the browser</p>
                     </div>
                 </div>
                 
@@ -83,7 +83,7 @@
         <div id="rulesPanel" class="opacity-40 pointer-events-none bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8 transition-all duration-300">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <span>⚙️</span> Step 2: Configure Allocation Checklists
+                    <span>⚙️</span> Step 2: Configure Two-Tier Allocation Checklists
                 </h2>
                 <button id="addRuleBtn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold text-xs py-1.5 px-3 rounded-lg border border-indigo-200 transition-all">
                     + Add New Custom Rule
@@ -123,7 +123,7 @@
         let masterDataset = [];
         let uniquePrns = new Set();
         let uniquePapers = new Map(); // PaperCode -> PaperName
-        let hierarchicalMap = new Map();
+        let hierarchicalMap = new Map(); // MainGroup -> Set of Subgroups (populated dynamically)
         let finalSlots = [];
         let paperToSlotIndexMap = new Map(); // PaperCode -> Day Index string for report tracking
 
@@ -217,12 +217,12 @@
         }
 
         function alignAndConsolidateData() {
-            showLoading(true, "Deduplicating entries and indexing structural variations...");
+            showLoading(true, "Deduplicating entries and capturing available groups...");
             const filteringMap = new Set();
             const consolidated = [];
 
-            const baseStructuralKeys = ["AEC", "MDC", "SEC", "VAC", "DSC"];
-            baseStructuralKeys.forEach(k => hierarchicalMap.set(k, new Set()));
+            // Master list of known academic prefix stems to scan for inside codes
+            const coreAcademicStems = ["AEC", "MDC", "SEC", "VAC", "DSC"];
 
             for (let i = 0; i < masterDataset.length; i++) {
                 const r = masterDataset[i];
@@ -239,15 +239,21 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
+                    // Two-Tier Dynamic Discovery Pass
                     const alphaMatches = code.match(/[A-Z]+/g);
                     if (alphaMatches) {
                         alphaMatches.forEach(chunk => {
                             if (chunk.length >= 3) {
-                                baseStructuralKeys.forEach(baseKey => {
-                                    if (chunk.startsWith(baseKey)) {
-                                        const subGroupPart = chunk.substring(baseKey.length);
+                                coreAcademicStems.forEach(stemKey => {
+                                    if (chunk.startsWith(stemKey)) {
+                                        // Only initialize map slots for parent groups that actually exist in the file
+                                        if (!hierarchicalMap.has(stemKey)) {
+                                            hierarchicalMap.set(stemKey, new Set());
+                                        }
+
+                                        const subGroupPart = chunk.substring(stemKey.length);
                                         if (subGroupPart.length > 0) {
-                                            hierarchicalMap.get(baseKey).add(subGroupPart);
+                                            hierarchicalMap.get(stemKey).add(subGroupPart);
                                         }
                                     }
                                 });
@@ -270,16 +276,16 @@
             }
         }
 
-        // Two-Tier Custom Multi-Select Card Builder UI Layer
+        // Two-Tier Dynamic Dropdown Card UI Builder
         function createHierarchicalRuleCard(defaultType, defaultMain = "", defaultSubVals = []) {
             const card = document.createElement('div');
             const bgClass = defaultType === 'universal-group' ? 'border-amber-200 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/40';
             card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
             card.setAttribute('data-type', defaultType);
 
-            // Populate Dropdown 1: Main Categories
+            // Populate Dropdown 1: Main Categories (derived EXCLUSIVELY from hierarchicalMap keys)
             let mainOptionsHtml = `<option value="">-- Select Main Group --</option>`;
-            Array.from(hierarchicalMap.keys()).forEach(mainKey => {
+            Array.from(hierarchicalMap.keys()).sort().forEach(mainKey => {
                 const selectedAttr = mainKey === defaultMain ? 'selected' : '';
                 mainOptionsHtml += `<option value="${mainKey}" ${selectedAttr}>${mainKey}</option>`;
             });
@@ -307,7 +313,7 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">2. Refine Subgroups (Multi-Select)</label>
                             <div class="subgroups-checklist-container border border-gray-200 rounded-lg p-2 max-h-36 overflow-y-auto bg-gray-50 space-y-1">
-                                <p class="text-xs text-gray-400 italic">Select a Main Group block first...</p>
+                                <p class="text-xs text-gray-400 italic">Select an available Main Group first...</p>
                             </div>
                         </div>
                     </div>
@@ -318,10 +324,9 @@
             const checklistContainer = card.querySelector('.subgroups-checklist-container');
             const typeSelector = card.querySelector('.rule-type-selector');
 
-            // Handler to replace subgroup text strings with an interactive multi-select checklist
             function updateSubgroupChecklist(selectedMain, currentVals = []) {
                 if (!selectedMain || !hierarchicalMap.has(selectedMain)) {
-                    checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">Select a Main Group block first...</p>`;
+                    checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">Select an available Main Group first...</p>`;
                     return;
                 }
 
@@ -329,7 +334,7 @@
                 const sortedSubs = Array.from(subSet).sort();
 
                 if(sortedSubs.length === 0) {
-                    checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">No discrete subgroups detected for this category.</p>`;
+                    checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">No variations discovered inside this block.</p>`;
                     return;
                 }
 
@@ -354,11 +359,9 @@
                 html += `</div>`;
                 checklistContainer.innerHTML = html;
 
-                // Bind Checklist Synchronisation Event Controllers
                 const selectAllCB = checklistContainer.querySelector('.select-all-checkbox');
                 const itemCBs = checklistContainer.querySelectorAll('.subgroup-item-checkbox');
 
-                // Sync UI state upon default programmatic layout instantiation
                 if (currentVals.includes('ALL')) {
                     selectAllCB.checked = true;
                     itemCBs.forEach(cb => cb.checked = true);
@@ -366,12 +369,10 @@
                     selectAllCB.checked = true;
                 }
 
-                // Global select-all checkbox toggle rule trigger
                 selectAllCB.addEventListener('change', (e) => {
                     itemCBs.forEach(cb => cb.checked = e.target.checked);
                 });
 
-                // Child checkbox event tracker to mutate master toggle
                 itemCBs.forEach(cb => {
                     cb.addEventListener('change', () => {
                         if (!cb.checked) {
@@ -397,16 +398,22 @@
             rulesContainer.appendChild(card);
         }
 
+        // Establish safe preset definitions if the parent keys match file imports
         function buildDefaultPresetRules() {
             rulesContainer.innerHTML = "";
-            // Default Preset 1: AEC -> ENG (Universal Consolidated Day)
-            if (hierarchicalMap.get("AEC")?.has("ENG")) {
-                createHierarchicalRuleCard('universal-group', 'AEC', ['ENG']);
+            
+            if (hierarchicalMap.has("AEC")) {
+                if (hierarchicalMap.get("AEC").has("ENG")) {
+                    createHierarchicalRuleCard('universal-group', 'AEC', ['ENG']);
+                }
+                createHierarchicalRuleCard('pool', 'AEC', ['ALL']);
             }
-            // Default Preset 2, 3, 4: Enable broad-pool defaults with all children checked by default
-            createHierarchicalRuleCard('pool', 'AEC', ['ALL']);
-            createHierarchicalRuleCard('pool', 'MDC', ['ALL']);
-            createHierarchicalRuleCard('pool', 'SEC', ['ALL']);
+            if (hierarchicalMap.has("MDC")) {
+                createHierarchicalRuleCard('pool', 'MDC', ['ALL']);
+            }
+            if (hierarchicalMap.has("SEC")) {
+                createHierarchicalRuleCard('pool', 'SEC', ['ALL']);
+            }
         }
 
         addRuleBtn.addEventListener('click', () => createHierarchicalRuleCard('pool', '', []));
@@ -422,14 +429,13 @@
             }
         }
 
-        // Processing Pipeline Engine
+        // Allocation Engine Loop Pass
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Analyzing checked multi-select rules and routing arrays...");
+            showLoading(true, "Analyzing verified checkbox layouts...");
             
             setTimeout(() => {
                 try {
                     const rules = [];
-                    // Extract checked multi-select arrays from active rule configurations
                     document.querySelectorAll('.rule-card').forEach(card => {
                         const type = card.querySelector('.rule-type-selector').value;
                         const mainGroup = card.querySelector('.main-group-select').value;
@@ -446,7 +452,6 @@
                                 });
                             }
 
-                            // Only append active rule definitions if checkboxes have values checked
                             if (checkedSubgroups.length > 0) {
                                 rules.push({ type, mainGroup, subGroups: checkedSubgroups });
                             }
@@ -460,12 +465,9 @@
                     let remainingPapers = Array.from(uniquePapers.keys());
                     const structuredSlots = []; 
 
-                    // Multi-Select Rule Evaluator Pass
                     function matchesTwoTierRule(paperCode, rule) {
                         if (!paperCode.includes(rule.mainGroup)) return false;
                         if (rule.subGroups.includes("ALL")) return true;
-                        
-                        // Checks if the code matches ANY checked checkbox inside this specific rule card
                         return rule.subGroups.some(sub => paperCode.includes(rule.mainGroup + sub));
                     }
 
@@ -533,7 +535,6 @@
 
                     finalSlots = structuredSlots;
                     
-                    // Populate index lookup references for clean cross-report rendering
                     paperToSlotIndexMap.clear();
                     finalSlots.forEach((dayCodes, dayIdx) => {
                         dayCodes.forEach(code => {
@@ -602,7 +603,7 @@
             outputSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // REPORT 1: Master Course Schedule Overview File
+        // REPORT 1 EXPORT
         exportBtn.addEventListener('click', () => {
             if (!finalSlots.length) return;
             const outputRows = [];
@@ -621,7 +622,7 @@
             XLSX.writeFile(workbook, "Master_Exam_Timetable_Plan.xlsx");
         });
 
-        // REPORT 2: Individual Student-Wise Registry Workbook 
+        // REPORT 2 EXPORT
         exportStudentBtn.addEventListener('click', () => {
             if (!masterDataset.length || !paperToSlotIndexMap.size) {
                 alert("Please run the generation scheduler before attempting data matrix reporting outputs.");
@@ -641,7 +642,6 @@
                         const paperCode = record.code;
                         const assignedSlot = paperToSlotIndexMap.get(paperCode) || "Unscheduled Exception";
 
-                        // Map tabular data pillars featuring multi-naming safety fallback parameters
                         studentWiseRows.push({
                             "Programme Name": rawRow["Programme Name"] || rawRow["ProgramFullName"] || "",
                             "Pattern": rawRow["Pattern"] || "",
@@ -665,7 +665,6 @@
                     const worksheet = XLSX.utils.json_to_sheet(studentWiseRows);
                     const workbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(workbook, worksheet, "Student Registry Matrix");
-                    
                     XLSX.writeFile(workbook, "Student_Wise_Exam_Timetable_Report.xlsx");
                 } catch (err) {
                     console.error(err);
