@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - 100% Dynamic Group Extraction</title>
+    <title>University Timetable Scheduler - Sanatized Flexible Isolation Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,10 +14,10 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Isolate structural blocks using dynamic groups derived purely from your file records.</p>
+                <p class="text-slate-400 mt-1">Robust pattern matching accommodating flexible version codes and trailing punctuation filters.</p>
             </div>
             <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Pure Data Discovery Active:</strong> Hardcoded prefix filters are completely removed. The Main Group options are generated 100% from your file.
+                <strong>Data Sanatization Guard Active:</strong> Strips trailing periods, spaces, and formatting artifacts (e.g., <code class="text-amber-400">KU2AECENG106.</code> becomes <code class="text-emerald-400">KU2AECENG106</code>) automatically.
             </div>
         </div>
     </header>
@@ -30,7 +30,7 @@
                     <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your dataset. The application will scan your files and populate the classification menus with only the parent groups found within the document records.
+                    Import your dataset. The application will scrub the rows, clean formatting variations, and extract structured two-tier rule options dynamically.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
@@ -217,17 +217,24 @@
         }
 
         function alignAndConsolidateData() {
-            showLoading(true, "Deduplicating entries and capturing available groups...");
+            showLoading(true, "Deduplicating entries and capturing valid parent groups...");
             const filteringMap = new Set();
             const consolidated = [];
+
+            // Strict Academic Component Tokens
+            const strictValidMainGroups = ["AEC", "MDC", "SEC", "VAC", "DSC"];
 
             for (let i = 0; i < masterDataset.length; i++) {
                 const r = masterDataset[i];
                 const prn = r["PRN"] ? String(r["PRN"]).trim() : "";
-                const code = r["PaperCode"] ? String(r["PaperCode"]).trim() : "";
+                let code = r["PaperCode"] ? String(r["PaperCode"]).trim() : "";
                 const name = r["PaperName"] ? String(r["PaperName"]).trim() : `Course Code ${code}`;
 
                 if (!prn || !code) continue;
+
+                // CRITICAL ADDITION: Sanitization filter logic to scrub text geometry
+                // Automatically removes dots, spaces, commas, or extra formatting anomalies from code tails
+                code = code.replace(/[.,\s_\-]+$/, ""); 
 
                 const trackingKey = `${prn}_${code}`;
                 if (!filteringMap.has(trackingKey)) {
@@ -236,29 +243,22 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // 100% Dynamic Parsing Engine Pass
-                    // Looks at strings like KU2AECENG106 or KU2DSCHIS111 
-                    // Automatically splits them into Main Group and Subgroup purely based on text geometry
-                    const alphaMatches = code.match(/[A-Z]+/g);
-                    if (alphaMatches) {
-                        alphaMatches.forEach(chunk => {
-                            // Skip short university prefixes like 'KU' (usually 2 letters)
-                            if (chunk.length >= 3) {
-                                // The main group is always the first 3 tracking characters (e.g., 'AEC', 'MDC', 'DSC')
-                                const stemKey = chunk.substring(0, 3);
-                                
-                                if (!hierarchicalMap.has(stemKey)) {
-                                    hierarchicalMap.set(stemKey, new Set());
-                                }
-
-                                // The subgroup is whatever remains after the first 3 letters (e.g., 'ENG', 'HIS')
-                                const subGroupPart = chunk.substring(3);
-                                if (subGroupPart.length > 0) {
-                                    hierarchicalMap.get(stemKey).add(subGroupPart);
-                                }
+                    // Indexing Pass
+                    strictValidMainGroups.forEach(stemKey => {
+                        const stemIndex = code.indexOf(stemKey);
+                        if (stemIndex !== -1) {
+                            if (!hierarchicalMap.has(stemKey)) {
+                                hierarchicalMap.set(stemKey, new Set());
                             }
-                        });
-                    }
+
+                            const remainingPart = code.substring(stemIndex + stemKey.length);
+                            const alphaSubMatch = remainingPart.match(/[A-Z]+/); 
+                            
+                            if (alphaSubMatch && alphaSubMatch[0].length > 0) {
+                                hierarchicalMap.get(stemKey).add(alphaSubMatch[0]);
+                            }
+                        }
+                    });
                 }
             }
 
@@ -271,7 +271,6 @@
             if (masterDataset.length > 0) {
                 generateBtn.disabled = false;
                 rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
-                // Clean configuration block: starts completely empty as requested
                 rulesContainer.innerHTML = ""; 
             }
         }
@@ -283,7 +282,6 @@
             card.className = `p-4 rounded-xl border ${bgClass} relative flex flex-col justify-between rule-card`;
             card.setAttribute('data-type', defaultType);
 
-            // Populate Dropdown 1: Main Categories (derived EXCLUSIVELY from hierarchicalMap keys found inside files)
             let mainOptionsHtml = `<option value="">-- Select Main Group --</option>`;
             Array.from(hierarchicalMap.keys()).sort().forEach(mainKey => {
                 const selectedAttr = mainKey === defaultMain ? 'selected' : '';
@@ -398,7 +396,6 @@
             rulesContainer.appendChild(card);
         }
 
-        // Programmatic rule addition trigger bound directly to button click actions
         addRuleBtn.addEventListener('click', () => createHierarchicalRuleCard('pool', '', []));
 
         function showLoading(show, txt = "") {
@@ -414,7 +411,7 @@
 
         // Allocation Engine Loop Pass
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Analyzing verified checkbox layouts...");
+            showLoading(true, "Analyzing verified checklist layouts...");
             
             setTimeout(() => {
                 try {
@@ -449,9 +446,12 @@
                     const structuredSlots = []; 
 
                     function matchesTwoTierRule(paperCode, rule) {
-                        if (!paperCode.includes(rule.mainGroup)) return false;
+                        const mainIdx = paperCode.indexOf(rule.mainGroup);
+                        if (mainIdx === -1) return false;
                         if (rule.subGroups.includes("ALL")) return true;
-                        return rule.subGroups.some(sub => paperCode.includes(rule.mainGroup + sub));
+                        
+                        const textAfterMain = paperCode.substring(mainIdx + rule.mainGroup.length);
+                        return rule.subGroups.some(sub => textAfterMain.startsWith(sub));
                     }
 
                     // PASS 1: UNIVERSAL CONSOLIDATED GROUPS
