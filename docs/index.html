@@ -3,42 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Timetable Scheduler - Optional Date Substitution Matrix</title>
+    <title>University Timetable Scheduler - Built-In Relational Matrix Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans text-gray-900 min-h-screen">
 
-    <header class="bg-slate-900 text-white shadow-md py-6 px-8 mb-8">
+    <header class="bg-slate-900 text-white shadow-md py-6 px-8 mb-6">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight">Two-Tier Exam Scheduler</h1>
-                <p class="text-slate-400 mt-1">Isolate structural blocks, map optional execution dates, and output detailed data plans.</p>
+                <p class="text-slate-400 mt-1">Isolate structural blocks, map calendar dates, and query pre-baked college directories.</p>
             </div>
-            <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-xs text-slate-300 max-w-md">
-                <strong>Optional Calendar Matrix:</strong> Date fields are optional. If blank, reports automatically fall back to standard day slot outputs (e.g., <code class="text-amber-400">Day 1</code>).
+            <div class="flex items-center gap-3">
+                <button id="toggleAdminBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold py-2 px-4 rounded-lg transition-all shadow-sm">
+                    🏫 View & Edit Built-In College Directory
+                </button>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         
+        <div id="adminPanelBlock" class="hidden bg-white p-6 rounded-xl shadow-xs border border-gray-200 mb-8 transition-all duration-300">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <span>🏫</span> Built-In College Reference Database
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Modifying records here instantly updates the relational matching variables used during report generation.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="addNewCollegeBtn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs py-2 px-3 rounded-lg border border-indigo-200 transition-all">
+                        + Add New College Entry
+                    </button>
+                    <button id="bakeCodeBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3 rounded-lg transition-all shadow-xs" title="Generates permanent source configuration text code">
+                        💾 Save Code Customizations Permanently
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto max-h-96 border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50 font-semibold text-gray-700 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-2.5 text-left w-24">Sl No</th>
+                            <th class="px-4 py-2.5 text-left w-32">College Code</th>
+                            <th class="px-4 py-2.5 text-left">College Name</th>
+                            <th class="px-4 py-2.5 text-left">Email Address Target</th>
+                            <th class="px-4 py-2.5 text-center w-24">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="collegeTableBody" class="divide-y divide-gray-200 bg-white">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-2">
                 <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                    <span>📁</span> Step 1: Drop & Import ZIP or Excel Files
+                    <span>📁</span> Step 1: Drop & Import ZIP or Student Excel Files
                 </h2>
                 <p class="text-sm text-gray-500 mb-4">
-                    Import your dataset. The application will scan your files and populate the classification menus with only the parent groups found within the document records.
+                    Import your candidate examination files. The system automatically extracts code variations and matches candidate centers against the embedded relational database.
                 </p>
                 
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 hover:border-slate-800 rounded-xl p-8 text-center cursor-pointer bg-gray-50 hover:bg-slate-50 transition-all group">
-                    <input type="file" id="fileInput" class="hidden" accept=".zip,.xlsx,.xls">
+                    <input type="file" id="fileInput" class="hidden" accept=".zip,.xlsx,.xls" multiple>
                     <div class="space-y-2">
                         <span class="text-4xl block group-hover:scale-105 transition-transform">📥</span>
-                        <p class="text-base font-medium text-gray-700">Drop ZIP or single Excel datasets here or <span class="text-indigo-600 underline">browse files</span></p>
-                        <p class="text-xs text-gray-400">Decompresses folders and parses row content safely in the browser</p>
+                        <p class="text-base font-medium text-gray-700">Drop ZIP or student datasets here or <span class="text-indigo-600 underline">browse files</span></p>
+                        <p class="text-xs text-gray-400">Processes and aligns multiple row data matrices inside the browser</p>
                     </div>
                 </div>
                 
@@ -132,15 +169,115 @@
     </main>
 
     <script>
-        // Structural Data Registers
+        // ==========================================
+        // 100% HARDCODED RELATIONAL EMAIL MAP REGISTER
+        // ==========================================
+        let collegeDirectoryDataset = [
+            { "code": "GB", "name": "Government Brennen College, Thalassery, Kannur", "email": "principal_gbc@kannuruniv.ac.in" },
+            { "code": "GK", "name": "Govt College Kasargod, Kasargod, Kasargod", "email": "principal_gck@kannuruniv.ac.in" },
+            { "code": "ST", "name": "Sir Syed Institute for Technical Studies, Taliparamba, Kannur", "email": "principal_ssitt@kannuruniv.ac.in" },
+            { "code": "GT", "name": "Kodiyeri Balakrishnan Memorial Government College Thalassery, Kannur", "email": "principal_gct@kannuruniv.ac.in" },
+            { "code": "KA", "name": "Kuniya College of Arts & Science, Kuniya, Kasaragod, Kasargod", "email": "principal_kuniyacas@kannuruniv.ac.in" },
+            { "code": "MD", "name": "Malik Dinar College of Graduate Studies, Seethangoli, Kasargod", "email": "principal_mdcgs@kannuruniv.ac.in" },
+            { "code": "AM", "name": "AMSTECK Arts and Science College, Kalliassery, Kannur", "email": "principal_amsteck@kannuruniv.ac.in" },
+            { "code": "CA", "name": "Co-operative Arts and Science College, Madai, Kannur", "email": "principal_casmadai@kannuruniv.ac.in" },
+            { "code": "CK", "name": "C.K Nair Arts and Management College, Hosdurg, Kasargod", "email": "principal_cknh@kannuruniv.ac.in" },
+            { "code": "CW", "name": "Chinmaya Arts and Science College for Women, Chala, Kannur", "email": "principal_cascchala@kannuruniv.ac.in" },
+            { "code": "DA", "name": "Dr. Ambedkar Arts and Science College, Periya, Kasargod", "email": "principal_amc@kannuruniv.ac.in" },
+            { "code": "DB", "name": "Don Bosco Arts and Science College, Angadikadavu, Kannur", "email": "principal_donbosco@kannuruniv.ac.in" },
+            { "code": "DM", "name": "Deva Matha Arts and Science College, Paisakari, Kannur", "email": "principal_dmc@kannuruniv.ac.in" },
+            { "code": "GA", "name": "Sree Narayana Guru College of Advanced Studies, Thottada, Kannur", "email": "principal_sngcast@kannuruniv.ac.in" },
+            { "code": "IM", "name": "ITM College of Arts and Science, Mayyil, Kannur", "email": "principal_itm@kannuruniv.ac.in" },
+            { "code": "KI", "name": "Concord Arts and Science College, Muttannur, Kannur", "email": "principal_concord@kannuruniv.ac.in" },
+            { "code": "MG", "name": "Mahatma Gandhi College, Iritty, Kannur", "email": "principal_mgci@kannuruniv.ac.in" },
+            { "code": "MH", "name": "Mar Thoma College for the Hearing Impaired, Cherkala, Kasargod", "email": "principal_marthoma@kannuruniv.ac.in" },
+            { "code": "MN", "name": "M.E.S. College, Naravoor, Kannur", "email": "principal_mes@kannuruniv.ac.in" },
+            { "code": "MO", "name": "Morazha Co-op Arts and Science College, Morazha, Kannur", "email": "principal_morazha@kannuruniv.ac.in" },
+            { "code": "MT", "name": "Malabar Islamic Complex Arts and Science College, Thekkil, Kasargod", "email": "principal_mic@kannuruniv.ac.in" },
+            { "code": "MW", "name": "MSS College of Arts & Science College,Tharuvana, Wayanad", "email": "principal_mss@kannuruniv.ac.in" },
+            { "code": "NL", "name": "Nalanda College of Arts and Science, Perla, Kasargod, Kasargod", "email": "principal_vvsn@kannuruniv.ac.in" },
+            { "code": "PL", "name": "Pilathara Co-op Arts and Science College, Kannur", "email": "principal_pilatharacasc@kannuruniv.ac.in" },
+            { "code": "PP", "name": "Payyannur College, Payyannur, Kannur", "email": "principal_pc\n@kannuruniv.ac.in" },
+            { "code": "SA", "name": "Sa-A-Diya Arts and Science College, Koliyadukkam, Kasargod", "email": "principal_sasck@kannuruniv.ac.in" },
+            { "code": "SB", "name": "St. Mary's College, Bela, Kasargod", "email": "principal_smcb@kannuruniv.ac.in" },
+            { "code": "SE", "name": "S.E.S College, Sreekandapuram, Kannur", "email": "principal_ses@kannuruniv.ac.in" },
+            { "code": "SI", "name": "SIBGA Institute of Advanced Studies, Irikkur, Kannur", "email": "principal_sibga@kannuruniv.ac.in" },
+            { "code": "SJ", "name": "St. Joseph's College, Pilathara, Kannur", "email": "principal_sjcp@kannuruniv.ac.in" },
+            { "code": "SN", "name": "Sree Narayana College,Thottada, Kannur", "email": "principal_snct@kannuruniv.ac.in" },
+            { "code": "SP", "name": "St. Pius X College, Rajapuram, Kasargod", "email": "principal_spcr@kannuruniv.ac.in" },
+            { "code": "SV", "name": "Sanatana Arts and Science College, Kanhangad, Kasargod", "email": "principal_sanatana@kannuruniv.ac.in" },
+            { "code": "TK", "name": "Taliparamba Arts and Science College, Kanhirangad, Kannur", "email": "principal_tasck@kannuruniv.ac.in" },
+            { "code": "TS", "name": "Tellicherry Institute of Advanced Studies, Kannur", "email": "principal_tias@kannuruniv.ac.in" },
+            { "code": "WI", "name": "Wadihuda Institute of Research and Advanced Studies, Vilayancode, Kannur", "email": "principal_wiras@kannuruniv.ac.in" },
+            { "code": "WM", "name": "WMO Imam Gazzali Arts and Science College, Wayanad, Wayanad", "email": "principal_wmo@kannuruniv.ac.in" },
+            { "code": "BL", "name": "B L M College of Applied Sciences, Kannur", "email": "principal_blmcas@kannuruniv.ac.in" },
+            { "code": "PR", "name": "Pazhassi Raja NSS College, Mattannur, Kannur", "email": "principal_prnssc@kannuruniv.ac.in" },
+            { "code": "SS", "name": "Sir Syed College,Taliparamba, Kannur", "email": "principal_ssct@kannuruniv.ac.in" },
+            { "code": "GD", "name": "Gurudev Arts and Science College, Mathil, Kannur", "email": "principal_gascm@kannuruniv.ac.in" },
+            { "code": "SH", "name": "Sharaf Arts and Science College, Padne, Kasargod", "email": "principal_sascp@kannuruniv.ac.in" },
+            { "code": "HG", "name": "Hermann Gundert college of Advanced Studies, Thalassery, Thalassery", "email": "principal_hgcasthalassery@kannuruniv.ac.in" },
+            { "code": "NK", "name": "Naher Arts and Science College, Kanhirode, Kannur", "email": "principal_naher@kannuruniv.ac.in" },
+            { "code": "AJ", "name": "Dr.APJ Abdul Kalam College of Professional Studies ,Ulikkal, Kannur", "email": "principal_apjakcps@kannuruniv.ac.in" },
+            { "code": "MS", "name": "MM Knowledge Arts and Science College, Thaliparamba, Kannur", "email": "principal_mmc@kannuruniv.ac.in" },
+            { "code": "NJ", "name": "Navajyothi College, Cherupuzha, Kannur", "email": "principal_njc@kannuruniv.ac.in" },
+            { "code": "SM", "name": "St. Mary's Arts & Science College, Cherupanathady, Kasargod", "email": "principal_smasc@kannuruniv.ac.in" },
+            { "code": "VM", "name": "Vidyamandir Arts & Science College, Payyannur, Kannur", "email": "principal_vidyamandirascp@kannuruniv.ac.in" },
+            { "code": "WA", "name": "Wings Arts & Science College, Padanna, Kasaragod", "email": "principal_wingsascp@kannuruniv.ac.in" },
+            { "code": "LI", "name": "Lourde Institute of Science and Technology, Taliparamba", "email": "principal_listtprb@kannuruniv.ac.in" },
+            { "code": "SK", "name": "Sunrise College of Advanced Studies, Kuttur, Mathamangalam, Kannur", "email": "principal_sunrisekuttur@kannuruniv.ac.in" },
+            { "code": "IH", "name": "College for Costume & Fashion Designing, under IIHT-Kannur , kannur", "email": "principal_iiht@kannuruniv.ac.in" },
+            { "code": "GM", "name": "Govt College, Mananthavady, Wayanad", "email": "principal_gcm@kannuruniv.ac.in" },
+            { "code": "MV", "name": "MVR Institute of Life Science & Research Studies, Kannur", "email": "principal_mvrinstitute@kannuruniv.ac.in" },
+            { "code": "NM", "name": "N.A.M College, Kallikandy, Kannur", "email": "principal_nam@kannuruniv.ac.in" },
+            { "code": "BJ", "name": "BEJA Model College of Arts & Science, Kasargod", "email": "principal_bejamc@kannuruniv.ac.in" },
+            { "code": "EK", "name": "E.K. Nayanar Memorial Govt. College, Elerithattu, Kasaragod", "email": "principal_eknm@kannuruniv.ac.in" },
+            { "code": "GC", "name": "Govt. Model Degree College-RUSA, Thrissilery, Mananthavady", "email": "principal_gmdcthrissilery@kannuruniv.ac.in" },
+            { "code": "GP", "name": "Govinda Pai Memorial Govt. College, Manjeswaram, Kasargod", "email": "principal_gpm@kannuruniv.ac.in" },
+            { "code": "GU", "name": "Govt. Arts and Science College, Uduma, Kasargod", "email": "principal_gascu@kannuruniv.ac.in" },
+            { "code": "MM", "name": "Mary Matha Arts and Science College, Mananthavady, Wayanad", "email": "principal_mmm@kannuruniv.ac.in" },
+            { "code": "PG", "name": "Govt. College, Peringome, Kannur", "email": "principal_gcp@kannuruniv.ac.in" },
+            { "code": "AK", "name": "College of Applied Science, Koothuparamba, Kannur", "email": "principal_cask@kannuruniv.ac.in" },
+            { "code": "CR", "name": "College of Applied Science, Pinarayi, Kannur", "email": "principal_caspinarayi@kannuruniv.ac.in" },
+            { "code": "CS", "name": "E M S Memorial College of Applied Science, Iritty, Kannur", "email": "principal_emsi@kannuruniv.ac.in" },
+            { "code": "CT", "name": "Chinmaya Institute of Technology, Kannur", "email": "principal_chintec@kannuruniv.ac.in" },
+            { "code": "DE", "name": "De Paul Arts and Science College, Edathotty, Kannur", "email": "principal_depaul@kannuruniv.ac.in" },
+            { "code": "KG", "name": "Government Arts and Science College, Kinanoor, Karinthalam, Kasargod", "email": "principal_gasck@kannuruniv.ac.in" },
+            { "code": "KH", "name": "Khansa Women's College for Advanced Studies, Kumbla, Kasargod, Kasargod", "email": "principal_khansa@kannuruniv.ac.in" },
+            { "code": "NS", "name": "Nirmalagiri College of Advanced Studies, Kuthuparamba, Kannur", "email": "principal_nasa@kannuruniv.ac.in" },
+            { "code": "SR", "name": "Sree Narayana College of Management Studies, Periya, Kasargod", "email": "principal_sncms@kannuruniv.ac.in" },
+            { "code": "AY", "name": "College of Applied Science (IHRD), Payyannur (Neruvambram), Kannur", "email": "principal_caspayyannur@kannuruniv.ac.in" },
+            { "code": "KM", "name": "K.M.M Govt Women's College, Kannur, Kannur", "email": "principal_kmm@kannuruniv.ac.in" },
+            { "code": "CM", "name": "College of Applied Science, Manjeswaram, Kumbla, Kasargod", "email": "principal_casmkumbala@kannuruniv.ac.in" },
+            { "code": "PK", "name": "P.K.K.M. College of Applied Science ,Mananthavady, Wayanad", "email": "principal_pkkm@kannuruniv.ac.in" },
+            { "code": "AP", "name": "College of Applied Science, Pattuvam, Kannur", "email": "principal_caspattuvam@kannuruniv.ac.in" },
+            { "code": "LC", "name": "Lasya College of Fine Arts,Pilathara, Kannur", "email": "principal_lasya@kannuruniv.ac.in" },
+            { "code": "MC", "name": "Mahatma Gandhi Arts and Science College, Chendayad, Chendayad", "email": "principal_mgasc@kannuruniv.ac.in" },
+            { "code": "MK", "name": "Model College, Madikkai, Kasaragod, Kasargod", "email": "principal_mc@kannuruniv.ac.in" },
+            { "code": "PM", "name": "Peoples Co-operative Arts and Science College, Munnad, Kasargod", "email": "principal_pcasc@kannuruniv.ac.in" },
+            { "code": "SG", "name": "Sree Narayana Guru College of Arts and Science, Iritty, Kannur", "email": "principal_sngcasi@kannuruniv.ac.in" },
+            { "code": "AL", "name": "Al-Maquar Arabic College, Nadukani, Taliparamba", "email": "principal_amacn@kannuruniv.ac.in" },
+            { "code": "CE", "name": "Co-operative Educational Academy, Kuthuparamba, Kannur", "email": "principal_ceakuthuparamba@kannuruniv.ac.in" },
+            { "code": "DP", "name": "Darul Irshad Arabic College, Paral, Kannur", "email": "principal_diac@kannuruniv.ac.in" },
+            { "code": "IU", "name": "Ideal Arabic College, Uliyil, Kannur", "email": "principal_iac@kannuruniv.ac.in" },
+            { "code": "NT", "name": "NEST Institute of Humanities and Basic Sciences, Karivellur, Kannur", "email": "principal_nest@kannuruniv.ac.in" },
+            { "code": "NU", "name": "Nusrathul Islam Arabic College, Kadavathur, Kannur", "email": "principal_niac@kannuruniv.ac.in" },
+            { "code": "SD", "name": "Sa-Adiya Arabic College, Deli, Kasargod", "email": "principal_sacd@kannuruniv.ac.in" },
+            { "code": "TI", "name": "Thanbeehul Islam Women's College, Naimarmoola, Kasargod", "email": "principal_tiwc@kannuruniv.ac.in" },
+            { "code": "KS", "name": "Kerala Institute Of Hospitality Management ,Thalassery, Kannur", "email": "principal_kihm@kannuruniv.ac.in" },
+            { "code": "AC", "name": "College of Applied Science, Cheemeni, Kasargod", "email": "principal_cascheemeni@kannuruniv.ac.in" },
+            { "code": "NG", "name": "Nirmalagiri College, Koothuparamba", "email": "principal_nck@kannuruniv.ac.in" },
+            { "code": "BC", "name": "Bhuvaneswari Arts & Science Cheemeni, Kasaragod", "email": "principal_bas@kannuruniv.ac.in" }
+        ];
+
+        // Memory Stores
         let masterDataset = [];
         let uniquePrns = new Set();
-        let uniquePapers = new Map(); // PaperCode -> PaperName
-        let hierarchicalMap = new Map(); // MainGroup -> Set of Subgroups (populated dynamically)
+        let uniquePapers = new Map(); 
+        let hierarchicalMap = new Map(); 
         let finalSlots = [];
         
-        let paperToSlotIndexMap = new Map(); // PaperCode -> Day Index string for report tracking
-        let dayDateMappingRegister = {};     // Day Index Integer -> Formatted Date String
+        let paperToSlotIndexMap = new Map(); 
+        let dayDateMappingRegister = {};     
 
         // DOM Handles
         const dropZone = document.getElementById('dropZone');
@@ -158,56 +295,100 @@
         const exportStudentBtn = document.getElementById('exportStudentBtn');
         const addRuleBtn = document.getElementById('addRuleBtn');
 
+        // Admin Management DOM Handles
+        const toggleAdminBtn = document.getElementById('toggleAdminBtn');
+        const adminPanelBlock = document.getElementById('adminPanelBlock');
+        const collegeTableBody = document.getElementById('collegeTableBody');
+        const addNewCollegeBtn = document.getElementById('addNewCollegeBtn');
+        const bakeCodeBtn = document.getElementById('bakeCodeBtn');
+
         // Metrics Handles
         const statRawRows = document.getElementById('statRawRows');
         const statStudents = document.getElementById('statStudents');
         const statPapers = document.getElementById('statPapers');
         const slotSummaryText = document.getElementById('slotSummaryText');
 
-        // Initialize drag & drop events
+        // Initialize Admin UI Controllers
+        toggleAdminBtn.addEventListener('click', () => {
+            adminPanelBlock.classList.toggle('hidden');
+            renderAdminDatabaseTable();
+        });
+
+        function renderAdminDatabaseTable() {
+            collegeTableBody.innerHTML = "";
+            collegeDirectoryDataset.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-gray-500 font-mono font-medium">${index + 1}</td>
+                    <td class="px-2 py-1">
+                        <input type="text" value="${item.code}" class="input-code font-mono font-bold bg-white border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none">
+                    </td>
+                    <td class="px-2 py-1">
+                        <input type="text" value="${item.name}" class="input-name bg-white border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none">
+                    </td>
+                    <td class="px-2 py-1">
+                        <input type="text" value="${item.email}" class="input-email font-mono bg-white border border-gray-300 rounded px-2 py-1 text-xs w-full focus:outline-none">
+                    </td>
+                    <td class="px-4 py-1 text-center">
+                        <button class="delete-row-btn text-red-500 hover:text-red-700 font-semibold text-xs transition-colors" data-index="${index}">Delete</button>
+                    </td>
+                `;
+
+                tr.querySelector('.input-code').addEventListener('input', (e) => { item.code = e.target.value.trim().toUpperCase(); });
+                tr.querySelector('.input-name').addEventListener('input', (e) => { item.name = e.target.value.trim(); });
+                tr.querySelector('.input-email').addEventListener('input', (e) => { item.email = e.target.value.trim(); });
+                tr.querySelector('.delete-row-btn').addEventListener('click', () => {
+                    collegeDirectoryDataset.splice(index, 1);
+                    renderAdminDatabaseTable();
+                });
+
+                collegeTableBody.appendChild(tr);
+            });
+        }
+
+        addNewCollegeBtn.addEventListener('click', () => {
+            collegeDirectoryDataset.unshift({ code: "NEW", name: "New College Title Description", email: "principal@kannuruniv.ac.in" });
+            renderAdminDatabaseTable();
+        });
+
+        // BAKE UTILITY BUTTON: Copies updated static JSON block to clipboard
+        bakeCodeBtn.addEventListener('click', () => {
+            const staticBlockText = `let collegeDirectoryDataset = ${JSON.stringify(collegeDirectoryDataset, null, 12)};`;
+            navigator.clipboard.writeText(staticBlockText).then(() => {
+                alert("Database state copied to clipboard! Open your index.html file, search for 'let collegeDirectoryDataset', and paste this over it to save it permanently.");
+            }).catch(err => {
+                console.error(err);
+                alert("Failed to auto-copy code block. Output code block dumped here:\n\n" + staticBlockText);
+            });
+        });
+
+        // Standard Application file drops handlers
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-slate-800', 'bg-slate-50'); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('border-slate-800', 'bg-slate-50');
-            if (e.dataTransfer.files.length) handleIncomingFile(e.dataTransfer.files[0]);
+            if (e.dataTransfer.files.length) handleIncomingFilesList(e.dataTransfer.files);
         });
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) handleIncomingFile(e.target.files[0]);
+            if (e.target.files.length) handleIncomingFilesList(e.target.files);
         });
 
-        async function handleIncomingFile(file) {
+        async function handleIncomingFilesList(files) {
             showLoading(true, "Scanning binary data packages...");
             masterDataset = [];
             uniquePrns.clear();
             uniquePapers.clear();
             hierarchicalMap.clear();
             paperToSlotIndexMap.clear();
-            dayDateMappingRegister = {};
-            generateBtn.disabled = true;
-            rulesContainer.innerHTML = "";
-            rulesPanel.classList.add('opacity-40', 'pointer-events-none');
-            dateMappingPanel.classList.add('hidden');
             outputSection.classList.add('hidden');
-            
+
             try {
-                const extension = file.name.split('.').pop().toLowerCase();
-                if (extension === 'zip') {
-                    const jszip = new JSZip();
-                    const unzipped = await jszip.loadAsync(file);
-                    for (const filename of Object.keys(unzipped.files)) {
-                        if (!unzipped.files[filename].dir && (filename.endsWith('.xlsx') || filename.endsWith('.xls'))) {
-                            const blob = await unzipped.files[filename].async("blob");
-                            await extractSpreadsheetRows(blob);
-                        }
-                    }
-                } else if (extension === 'xlsx' || extension === 'xls') {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
                     await extractSpreadsheetRows(file);
-                } else {
-                    alert("Format error. Please upload a valid standard .xlsx workbook or a compressed .zip folder.");
-                    showLoading(false);
-                    return;
                 }
                 alignAndConsolidateData();
             } catch (err) {
@@ -240,7 +421,6 @@
             const filteringMap = new Set();
             const consolidated = [];
 
-            // Strict Academic Component Tokens
             const strictValidMainGroups = ["AEC", "MDC", "SEC", "VAC", "DSC"];
 
             for (let i = 0; i < masterDataset.length; i++) {
@@ -251,7 +431,6 @@
 
                 if (!prn || !code) continue;
 
-                // Sanitization filter logic to scrub trailing characters or terminal dots
                 code = code.replace(/[.,\s_\-]+$/, ""); 
 
                 const trackingKey = `${prn}_${code}`;
@@ -261,7 +440,7 @@
                     uniquePapers.set(code, name);
                     consolidated.push({ prn, code, name, raw: r });
 
-                    // Indexing Pass using flexible positional searches
+                    // Two-Tier Indexing Pass
                     strictValidMainGroups.forEach(stemKey => {
                         const stemIndex = code.indexOf(stemKey);
                         if (stemIndex !== -1) {
@@ -270,7 +449,6 @@
                             }
                             const remainingPart = code.substring(stemIndex + stemKey.length);
                             const alphaSubMatch = remainingPart.match(/[A-Z]+/); 
-                            
                             if (alphaSubMatch && alphaSubMatch[0].length > 0) {
                                 hierarchicalMap.get(stemKey).add(alphaSubMatch[0]);
                             }
@@ -288,7 +466,7 @@
             if (masterDataset.length > 0) {
                 generateBtn.disabled = false;
                 rulesPanel.classList.remove('opacity-40', 'pointer-events-none');
-                rulesContainer.innerHTML = ""; 
+                rulesContainer.innerHTML = "";
             }
         }
 
@@ -347,11 +525,6 @@
                 const subSet = hierarchicalMap.get(selectedMain);
                 const sortedSubs = Array.from(subSet).sort();
 
-                if(sortedSubs.length === 0) {
-                    checklistContainer.innerHTML = `<p class="text-xs text-gray-400 italic">No variations discovered inside this block.</p>`;
-                    return;
-                }
-
                 let html = `
                     <label class="flex items-center gap-2 text-xs font-bold text-indigo-700 pb-1 border-b border-gray-200 mb-1.5 cursor-pointer">
                         <input type="checkbox" class="select-all-checkbox h-3.5 w-3.5 rounded text-indigo-600 focus:ring-indigo-500">
@@ -379,22 +552,10 @@
                 if (currentVals.includes('ALL')) {
                     selectAllCB.checked = true;
                     itemCBs.forEach(cb => cb.checked = true);
-                } else if (itemCBs.length > 0 && Array.from(itemCBs).every(cb => cb.checked)) {
-                    selectAllCB.checked = true;
                 }
 
                 selectAllCB.addEventListener('change', (e) => {
                     itemCBs.forEach(cb => cb.checked = e.target.checked);
-                });
-
-                itemCBs.forEach(cb => {
-                    cb.addEventListener('change', () => {
-                        if (!cb.checked) {
-                            selectAllCB.checked = false;
-                        } else if (Array.from(itemCBs).every(item => item.checked)) {
-                            selectAllCB.checked = true;
-                        }
-                    });
                 });
             }
 
@@ -421,13 +582,12 @@
                 loadingState.classList.add('flex');
             } else {
                 loadingState.classList.add('hidden');
-                loadingState.classList.remove('flex');
             }
         }
 
-        // Allocation Engine Loop Pass
+        // Processing Pipeline
         generateBtn.addEventListener('click', () => {
-            showLoading(true, "Analyzing checked multi-select rules and generating timetable bins...");
+            showLoading(true, "Resolving non-overlapping graph matrices...");
             
             setTimeout(() => {
                 try {
@@ -435,22 +595,12 @@
                     document.querySelectorAll('.rule-card').forEach(card => {
                         const type = card.querySelector('.rule-type-selector').value;
                         const mainGroup = card.querySelector('.main-group-select').value;
-                        
                         if (mainGroup) {
                             const selectAllCB = card.querySelector('.select-all-checkbox');
                             const checkedSubgroups = [];
-
-                            if (selectAllCB && selectAllCB.checked) {
-                                checkedSubgroups.push("ALL");
-                            } else {
-                                card.querySelectorAll('.subgroup-item-checkbox:checked').forEach(cb => {
-                                    checkedSubgroups.push(cb.value);
-                                });
-                            }
-
-                            if (checkedSubgroups.length > 0) {
-                                rules.push({ type, mainGroup, subGroups: checkedSubgroups });
-                            }
+                            if (selectAllCB && selectAllCB.checked) { checkedSubgroups.push("ALL"); } 
+                            else { card.querySelectorAll('.subgroup-item-checkbox:checked').forEach(cb => checkedSubgroups.push(cb.value)); }
+                            if (checkedSubgroups.length > 0) rules.push({ type, mainGroup, subGroups: checkedSubgroups });
                         }
                     });
 
@@ -465,7 +615,6 @@
                         const mainIdx = paperCode.indexOf(rule.mainGroup);
                         if (mainIdx === -1) return false;
                         if (rule.subGroups.includes("ALL")) return true;
-                        
                         const textAfterMain = paperCode.substring(mainIdx + rule.mainGroup.length);
                         return rule.subGroups.some(sub => textAfterMain.startsWith(sub));
                     }
@@ -489,21 +638,16 @@
                                 let safeToPool = true;
                                 for(const allocated of conflictVerifiedPool) {
                                     const allocatedStudents = enrollmentMap.get(allocated);
-                                    for(const prn of codeStudents) {
-                                        if(allocatedStudents.has(prn)) { safeToPool = false; break; }
-                                    }
+                                    for(const prn of codeStudents) { if(allocatedStudents.has(prn)) { safeToPool = false; break; } }
                                     if(!safeToPool) break;
                                 }
-                                if(safeToPool) {
-                                    conflictVerifiedPool.push(code);
-                                    remainingPapers = remainingPapers.filter(c => c !== code);
-                                }
+                                if(safeToPool) { conflictVerifiedPool.push(code); remainingPapers = remainingPapers.filter(c => c !== code); }
                             });
                             if(conflictVerifiedPool.length > 0) structuredSlots.push(conflictVerifiedPool);
                         }
                     });
 
-                    // PASS 3: CORE DOMAIN MAJOR PAPERS (DSC / FALLBACK)
+                    // PASS 3: CORE DOMAIN MAJOR PAPERS
                     remainingPapers.sort((a, b) => enrollmentMap.get(b).size - enrollmentMap.get(a).size);
                     remainingPapers.forEach(code => {
                         const currentStudents = enrollmentMap.get(code);
@@ -511,86 +655,57 @@
 
                         for (let i = 0; i < structuredSlots.length; i++) {
                             const targetSlot = structuredSlots[i];
-                            const isRuleBasedSlot = targetSlot.some(c => rules.some(rule => matchesTwoTierRule(c, rule)));
-                            if (isRuleBasedSlot) continue;
+                            if (targetSlot.some(c => rules.some(rule => matchesTwoTierRule(c, rule)))) continue;
 
                             let conflict = false;
                             for (const existingCode of targetSlot) {
                                 const existingStudents = enrollmentMap.get(existingCode);
-                                for (const student of currentStudents) {
-                                    if (existingStudents.has(student)) { conflict = true; break; }
-                                }
+                                for (const student of currentStudents) { if (existingStudents.has(student)) { conflict = true; break; } }
                                 if (conflict) break;
                             }
-
-                            if (!conflict) {
-                                targetSlot.push(code);
-                                placed = true;
-                                break;
-                            }
+                            if (!conflict) { targetSlot.push(code); placed = true; break; }
                         }
                         if (!placed) structuredSlots.push([code]);
                     });
 
                     finalSlots = structuredSlots;
-                    
                     paperToSlotIndexMap.clear();
-                    finalSlots.forEach((dayCodes, dayIdx) => {
-                        dayCodes.forEach(code => {
-                            paperToSlotIndexMap.set(code, `Day ${dayIdx + 1}`);
-                        });
-                    });
+                    finalSlots.forEach((dayCodes, dayIdx) => { dayCodes.forEach(code => paperToSlotIndexMap.set(code, `Day ${dayIdx + 1}`)); });
 
                     buildCalendarMappingInputs(finalSlots.length);
                     renderTimetableOutput(finalSlots, enrollmentMap, rules, matchesTwoTierRule);
 
                 } catch (e) {
                     console.error(e);
-                    alert("Algorithmic Scheduling Error: " + e.message);
+                    alert("Scheduling Error: " + e.message);
                 } finally {
                     showLoading(false);
                 }
             }, 50);
         });
 
-        // Build Calendar Inputs Panel
         function buildCalendarMappingInputs(totalDays) {
             datePickersGrid.innerHTML = "";
             dayDateMappingRegister = {};
-
             for (let i = 1; i <= totalDays; i++) {
                 dayDateMappingRegister[i] = ""; 
-
                 const container = document.createElement('div');
                 container.className = "p-3 rounded-xl border border-gray-200 bg-gray-50 flex flex-col justify-between";
                 container.innerHTML = `
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-1 font-mono">Day ${i} Slot Allocation</label>
-                    <input type="date" class="day-calendar-input w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" data-day-index="${i}">
+                    <input type="date" class="day-calendar-input w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none" data-day-index="${i}">
                 `;
-
-                const dateInput = container.querySelector('.day-calendar-input');
-                dateInput.addEventListener('change', (e) => {
+                container.querySelector('.day-calendar-input').addEventListener('change', (e) => {
                     const idx = e.target.getAttribute('data-day-index');
-                    const rawVal = e.target.value; 
-                    
-                    if(rawVal) {
-                        const parts = rawVal.split('-');
-                        const formattedDisplayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                        dayDateMappingRegister[idx] = formattedDisplayDate;
-                        
-                        const bannerTextNode = document.getElementById(`day-title-banner-${idx}`);
-                        if(bannerTextNode) {
-                            bannerTextNode.innerText = `Exam Matrix Day #${idx} — ${formattedDisplayDate}`;
-                        }
+                    if(e.target.value) {
+                        const parts = e.target.value.split('-');
+                        dayDateMappingRegister[idx] = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        document.getElementById(`day-title-banner-${idx}`).innerText = `Exam Matrix Day #${idx} — ${dayDateMappingRegister[idx]}`;
                     } else {
                         dayDateMappingRegister[idx] = "";
-                        const bannerTextNode = document.getElementById(`day-title-banner-${idx}`);
-                        if(bannerTextNode) {
-                            bannerTextNode.innerText = `Exam Matrix Day #${idx}`;
-                        }
+                        document.getElementById(`day-title-banner-${idx}`).innerText = `Exam Matrix Day #${idx}`;
                     }
                 });
-
                 datePickersGrid.appendChild(container);
             }
             dateMappingPanel.classList.remove('hidden');
@@ -604,28 +719,19 @@
                 const dayIndex = index + 1;
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden flex flex-col";
-                
                 let tagHtml = `<span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${dayPapers.length} Papers Included</span>`;
-                const isUniversal = dayPapers.some(c => rules.some(r => r.type === 'universal-group' && matchesTwoTierRule(c, r)));
-                const isPool = dayPapers.some(c => rules.some(r => r.type === 'pool' && matchesTwoTierRule(c, r)));
-                
-                if (isUniversal) {
-                    tagHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ Universal Consolidated Block</span>`;
-                } else if (isPool) {
-                    tagHtml = `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">📊 Parallel Elective Bucket</span>`;
-                }
+                if (dayPapers.some(c => rules.some(r => r.type === 'universal-group' && matchesTwoTierRule(c, r)))) tagHtml = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ Universal Consolidated Block</span>`;
+                else if (dayPapers.some(c => rules.some(r => r.type === 'pool' && matchesTwoTierRule(c, r)))) tagHtml = `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">📊 Parallel Elective Bucket</span>`;
 
-                const header = document.createElement('div');
-                header.className = "bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center";
-                header.innerHTML = `
-                    <span id="day-title-banner-${dayIndex}" class="font-bold text-slate-700 text-sm uppercase">Exam Matrix Day #${dayIndex}</span>
-                    ${tagHtml}
+                card.innerHTML = `
+                    <div class="bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <span id="day-title-banner-${dayIndex}" class="font-bold text-slate-700 text-sm uppercase">Exam Matrix Day #${dayIndex}</span>
+                        ${tagHtml}
+                    </div>
+                    <div class="p-4 space-y-3 divide-y divide-gray-100 overflow-y-auto max-h-72 flex-1" id="day-papers-${dayIndex}"></div>
                 `;
-                card.appendChild(header);
-
-                const container = document.createElement('div');
-                container.className = "p-4 space-y-3 divide-y divide-gray-100 overflow-y-auto max-h-72 flex-1";
                 
+                const box = card.querySelector(`#day-papers-${dayIndex}`);
                 dayPapers.forEach(code => {
                     const el = document.createElement('div');
                     el.className = "pt-2 first:pt-0";
@@ -636,66 +742,54 @@
                         </div>
                         <p class="text-xs font-medium text-gray-800 mt-1">${uniquePapers.get(code)}</p>
                     `;
-                    container.appendChild(el);
+                    box.appendChild(el);
                 });
-
-                card.appendChild(container);
                 timetableGrid.appendChild(card);
             });
-
             outputSection.classList.remove('hidden');
             outputSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // REPORT 1 EXPORT: Course Schedule Master Plan Sheets Including Date Columns (Optional Fallbacks Enforced)
+        // MASTER EXPORT SHEET
         exportBtn.addEventListener('click', () => {
             if (!finalSlots.length) return;
             const outputRows = [];
-            
             finalSlots.forEach((codes, dayIdx) => {
                 const dayNum = dayIdx + 1;
-                // Safe Fallback check: prints out input string OR empty slot if skipped entirely by the user
-                const mappedCalendarDate = dayDateMappingRegister[dayNum] || "";
-
                 codes.forEach(code => {
                     outputRows.push({
                         "Scheduled Day": `Day ${dayNum}`,
-                        "Assigned Date": mappedCalendarDate, 
+                        "Assigned Date": dayDateMappingRegister[dayNum] || "", 
                         "Paper Code": code,
                         "Paper Name": uniquePapers.get(code)
                     });
                 });
             });
-
             const worksheet = XLSX.utils.json_to_sheet(outputRows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Master Plan");
             XLSX.writeFile(workbook, "Master_Exam_Timetable_Plan.xlsx");
         });
 
-        // REPORT 2 EXPORT: Individual Student Registry Sheets Including Date Columns (Optional Fallbacks Enforced)
+        // REALTIONAL DATA JOIN STUDENT EXPORT
         exportStudentBtn.addEventListener('click', () => {
-            if (!masterDataset.length || !paperToSlotIndexMap.size) {
-                alert("Please run the generation scheduler before attempting data matrix reporting outputs.");
-                return;
-            }
-
-            showLoading(true, "Compiling student-wise registry reports...");
+            if (!masterDataset.length || !paperToSlotIndexMap.size) return;
+            showLoading(true, "Compiling multi-field personal registry reports...");
 
             setTimeout(() => {
                 try {
                     const studentWiseRows = [];
-
                     for (let i = 0; i < masterDataset.length; i++) {
                         const record = masterDataset[i];
                         const rawRow = record.raw; 
-                        
                         const paperCode = record.code;
                         const assignedSlotString = paperToSlotIndexMap.get(paperCode) || "Day 0";
-                        
                         const numericDayKey = assignedSlotString.replace("Day ", "").trim();
-                        // Safe Fallback check: maps date or leaves field row space empty if optional pass was skipped
-                        const mappedCalendarDate = dayDateMappingRegister[numericDayKey] || "";
+
+                        // Query lookup match directly from the hardcoded memory array register
+                        const venueCodeKey = rawRow["VenueCode"] ? String(rawRow["VenueCode"]).trim() : "";
+                        const directoryMatch = collegeDirectoryDataset.find(c => c.code === venueCodeKey);
+                        const matchedCollegeEmail = directoryMatch ? directoryMatch.email : "Not Provided in Directory";
 
                         studentWiseRows.push({
                             "Programme Name": rawRow["Programme Name"] || rawRow["ProgramFullName"] || "",
@@ -711,10 +805,11 @@
                             "PaperCode": paperCode,
                             "PaperName": record.name,
                             "SeatNumber": rawRow["SeatNumber"] || "",
-                            "VenueCode": rawRow["VenueCode"] || "",
+                            "VenueCode": venueCodeKey,
                             "VenueName": rawRow["VenueName"] || "",
                             "Assigned Slot Index": assignedSlotString,
-                            "Assigned Date": mappedCalendarDate 
+                            "Assigned Date": dayDateMappingRegister[numericDayKey] || "",
+                            "College Email ID": matchedCollegeEmail 
                         });
                     }
 
@@ -724,7 +819,6 @@
                     XLSX.writeFile(workbook, "Student_Wise_Exam_Timetable_Report.xlsx");
                 } catch (err) {
                     console.error(err);
-                    alert("Error constructing student report workbook: " + err.message);
                 } finally {
                     showLoading(false);
                 }
